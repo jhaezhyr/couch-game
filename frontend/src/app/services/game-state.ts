@@ -77,7 +77,9 @@ export class GameStateService {
     switch (event.type) {
       case 'playerJoined':
         this.updateRoom(event.data.room);
-        if (event.data.player.id === this.currentPlayer()?.id) {
+        // Only update currentPlayer if this is our join response (id is empty or matches)
+        const localPlayer = this.currentPlayer();
+        if (event.data.player && (localPlayer?.id === '' || event.data.player.id === localPlayer?.id)) {
           this.currentPlayer.set(event.data.player);
         }
         break;
@@ -104,6 +106,11 @@ export class GameStateService {
 
       case 'gameFinished':
         this.updateRoom(event.data.room);
+        break;
+
+      case 'nameCalled':
+        // Show feedback when a name is called
+        this.setError(`${event.data.callerName} called "${event.data.calledName}"`);
         break;
 
       default:
@@ -180,7 +187,7 @@ export class GameStateService {
     if (!room) return false;
 
     // Check if seat is empty
-    if (room.seats[seatIndex] !== null) return false;
+    if (room.seats[seatIndex] === null) return false;
 
     // Check if game phase allows joining
     return room.gamePhase === 'waiting' || room.gamePhase === 'setup';

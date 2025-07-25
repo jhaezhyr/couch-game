@@ -1,6 +1,13 @@
 // Import global variables
 @import '../../../styles.less';
 
+button {
+  outline: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 0px;
+}
+
 .lobby-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -202,9 +209,18 @@
   text-align: center;
 
   .current-turn {
-    color: @glow-success;
+    color: #fff;
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 2rem;
+    background: linear-gradient(90deg, #222 80%, #333 100%);
+    border-radius: 12px;
+    box-shadow: 0 0 24px 8px fade(@glow-success, 40%);
+    padding: 24px 0 16px 0;
+    margin: 24px 0;
+    animation: pulse-success 1.2s infinite alternate;
+    border: 2px solid @glow-success;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px fade(@glow-success, 60%);
   }
 
   .waiting-turn {

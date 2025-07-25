@@ -95,7 +95,7 @@ export function createGameServer(): ServerInstance {
       if (currentPlayerIndex === -1) return;
 
       // Check if target seat is available or different from current
-      if (seatIndex < 0 || seatIndex >= setup.players.length) return;
+      if (seatIndex < 0 || seatIndex > setup.players.length) return;
       if (seatIndex === currentPlayerIndex) return; // Same seat
 
       // Swap players at positions
@@ -158,11 +158,22 @@ export function createGameServer(): ServerInstance {
       const callingPlayer = room.players.find(p => p.id.value === playerInfo.playerId);
       if (!callingPlayer) return;
 
+      // Perform the move
+      const { winner } = makeMove(room, name);
+
       // Broadcast the name call to all players
       io.to(playerInfo.roomId).emit('nameCalled', { 
         callerName: callingPlayer.name.value, 
         calledName: name 
       });
+
+      // Broadcast updated game state
+      const frontendRoom = convertGameRoomToFrontendFormat(room);
+      if (winner) {
+        io.to(playerInfo.roomId).emit('gameFinished', { room: frontendRoom, winner });
+      } else {
+        io.to(playerInfo.roomId).emit('moveMade', { room: frontendRoom });
+      }
     });
 
     socket.on('leaveRoom', () => {
