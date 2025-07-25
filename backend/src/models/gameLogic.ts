@@ -31,11 +31,6 @@ export function makeMove(room: GameRoom, calledNameValue: string): { winner: str
   room.seats[emptySeatIdx] = mover.id;
   mover.position = emptySeatIdx;
 
-  // Switch secret names between caller and mover
-  const tempSecret = caller.secretName;
-  caller.secretName = mover.secretName;
-  mover.secretName = tempSecret;
-
   // Update empty seat to where the mover came from
   room.emptySeat = oldMoverPosition;
 

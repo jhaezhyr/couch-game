@@ -98,4 +98,23 @@ export class Lobby {
   callName(name: string): void {
     this.gameState.callPlayerName(name);
   }
+
+  getCircularPosition(seatIndex: number, totalSeats: number): { x: string; y: string } {
+    if (totalSeats === 0) return { x: '50%', y: '50%' };
+
+    // Calculate angle for this seat (starting from top, going clockwise)
+    const angle = (2 * Math.PI * seatIndex) / totalSeats - Math.PI / 2;
+
+    // Radius as percentage of container (adjust for responsive design)
+    const radius = 40; // 40% of container
+
+    // Calculate position
+    const x = 50 + radius * Math.cos(angle); // Center (50%) + offset
+    const y = 50 + radius * Math.sin(angle); // Center (50%) + offset
+
+    return {
+      x: `${x}%`,
+      y: `${y}%`
+    };
+  }
 }

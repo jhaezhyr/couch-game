@@ -44,37 +44,71 @@
     </div>
   } @else {
     <div class="game-room">
-      <div class="room-info card">
-        <h2>Room: {{ gameState.room()?.id }}</h2>
-        <p class="game-phase">Phase: {{ gameState.gamePhase() }}</p>
-        @if (gameState.player()) {
-          <p class="player-info">Playing as: {{ gameState.player()?.name }}</p>
-          @if (gameState.myTeam()) {
-            <p class="team-info">Team: {{ gameState.myTeam() }}</p>
+
+
+      @if (gameState.gamePhase() === 'setup') {
+        <div class="room-info card">
+          <h2>Room: {{ gameState.room()?.id }}</h2>
+          <p class="game-phase">Phase: {{ gameState.gamePhase() }}</p>
+          @if (gameState.player()) {
+            <p class="player-info">Playing as: {{ gameState.player()?.name }}</p>
+            @if (gameState.myTeam()) {
+              <p class="team-info">Team: {{ gameState.myTeam() }}</p>
+            }
           }
-        }
-      </div>
+        </div>
+      }
+
+      @if (gameState.gamePhase() === 'playing') {
+        <div class="game-controls card">
+          @if (gameState.isCurrentPlayer()) {
+            <div class="current-turn">
+              <h3>It's your turn!</h3>
+              <p>Your secret name: <strong>{{ getMySecretName() }}</strong></p>
+              <p>Call a name to make that person move to the empty seat:</p>
+              <div class="name-selection">
+                @for (name of getAllPlayerNames(); track name) {
+                  <button
+                    class="btn primary name-btn"
+                    (click)="callName(name)"
+                    [disabled]="name === getMySecretName()">
+                    {{ name }}
+                  </button>
+                }
+              </div>
+            </div>
+          } @else {
+            <p class="waiting-turn">Waiting for {{ getCurrentPlayerName() }}'s move...</p>
+            <p class="secret-name">Your secret name: <strong>{{ getMySecretName() }}</strong></p>
+          }
+        </div>
+      }
 
       <div class="couch-area">
+        <div class="flow-indicator">Players move clockwise around the circle</div>
         <div class="couch">
           <div class="seats-grid">
             @for (seat of gameState.room()?.seats; track $index) {
-              <div
-                class="seat"
+              <button
+                type="button"
+                class="seat circular-seat"
                 [class.occupied]="seat !== null"
                 [class.current-player]="isCurrentPlayerSeat($index)"
                 [class.team-a]="getPlayerTeam(seat?.id) === 'A'"
                 [class.team-b]="getPlayerTeam(seat?.id) === 'B'"
                 [class.my-seat]="seat?.id === gameState.player()?.id"
                 [class.couch-seat]="isCouchSeat($index)"
+                [style.left]="getCircularPosition($index, gameState.room()?.seats?.length || 0).x"
+                [style.top]="getCircularPosition($index, gameState.room()?.seats?.length || 0).y"
                 (click)="takeSeat($index)"
+                [attr.aria-label]="seat ? 'Seat for ' + seat.name : 'Empty seat'"
               >
                 @if (seat) {
                   <span class="seat-name">{{ seat.name }}</span>
                 } @else {
                   <span class="seat-placeholder">+</span>
                 }
-              </div>
+              </button>
             }
           </div>
         </div>
@@ -110,31 +144,6 @@
             <p class="setup-instructions">
               Make sure all seats are filled and teams are balanced to start the game.
             </p>
-          }
-        </div>
-      }
-
-      @if (gameState.gamePhase() === 'playing') {
-        <div class="game-controls card">
-          @if (gameState.isCurrentPlayer()) {
-            <div class="current-turn">
-              <h3>It's your turn!</h3>
-              <p>Your secret name: <strong>{{ getMySecretName() }}</strong></p>
-              <p>Call a name to make that person move to the empty seat:</p>
-              <div class="name-selection">
-                @for (name of getAllPlayerNames(); track name) {
-                  <button 
-                    class="btn primary name-btn" 
-                    (click)="callName(name)"
-                    [disabled]="name === getMySecretName()">
-                    {{ name }}
-                  </button>
-                }
-              </div>
-            </div>
-          } @else {
-            <p class="waiting-turn">Waiting for {{ getCurrentPlayerName() }}'s move...</p>
-            <p class="secret-name">Your secret name: <strong>{{ getMySecretName() }}</strong></p>
           }
         </div>
       }

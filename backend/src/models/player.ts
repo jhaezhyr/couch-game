@@ -8,6 +8,7 @@ export class Player {
   team: TeamId;
   position: number | null;
   secretName: Name | null;
+  emoji: string | null;
 
   constructor(id: PlayerId, name: Name, team: TeamId) {
     this.id = id;
@@ -15,5 +16,6 @@ export class Player {
     this.team = team;
     this.position = null;
     this.secretName = null;
+    this.emoji = null;
   }
 }
