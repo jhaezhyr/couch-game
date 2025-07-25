@@ -23,9 +23,9 @@ export interface GameRoom {
   secretNames?: { playerId: string; secretName: string }[];
 }
 
-export interface GameEvent {
-  type: 'playerJoined' | 'playerLeft' | 'seatTaken' | 'teamAssigned' | 'gameStarted' | 'moveMade' | 'gameFinished' | 'nameCalled' | 'emojiChanged';
-  data?: any;
+interface GameEvent {
+  type: 'playerJoined' | 'playerLeft' | 'seatTaken' | 'teamAssigned' | 'gameStarted' | 'moveMade' | 'gameFinished' | 'nameCalled' | 'emojiChanged' | 'roomUpdate' | 'error';
+  data: any;
 }
 
 @Injectable({
@@ -112,11 +112,31 @@ export class SocketService {
     this.socket.on('emojiChanged', (data) => {
       this.gameEventSubject.next({ type: 'emojiChanged', data });
     });
+
+    this.socket.on('roomUpdate', (data) => {
+      this.gameEventSubject.next({ type: 'roomUpdate', data });
+    });
+
+    this.socket.on('gameStarted', (data) => {
+      this.gameEventSubject.next({ type: 'gameStarted', data });
+    });
+
+    this.socket.on('moveMade', (data) => {
+      this.gameEventSubject.next({ type: 'moveMade', data });
+    });
+
+    this.socket.on('gameFinished', (data) => {
+      this.gameEventSubject.next({ type: 'gameFinished', data });
+    });
+
+    this.socket.on('error', (data) => {
+      this.gameEventSubject.next({ type: 'error', data });
+    });
   }
 
   // Game actions
-  joinRoom(roomId: string, playerName: string): void {
-    this.socket?.emit('joinRoom', { roomId, playerName });
+  joinRoom(roomId: string, playerName: string, persistentPlayerId?: string): void {
+    this.socket?.emit('joinRoom', { roomId, name: playerName, persistentPlayerId });
   }
 
   leaveRoom(): void {
@@ -131,12 +151,12 @@ export class SocketService {
     this.socket?.emit('assignToTeam', { playerId, team });
   }
 
-  startGame(): void {
-    this.socket?.emit('startGame');
+  startGame(roomId: string): void {
+    this.socket?.emit('startGame', { roomId });
   }
 
-  makeMove(fromSeat: number, toSeat: number): void {
-    this.socket?.emit('makeMove', { fromSeat, toSeat });
+  makeMove(roomId: string, calledNameValue: string): void {
+    this.socket?.emit('makeMove', { roomId, calledNameValue });
   }
 
   callPlayerName(name: string): void {

@@ -44,17 +44,107 @@ export function createGameServer(): ServerInstance {
   io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
-    socket.on('joinRoom', ({ roomId, playerName }) => {
-      const actualRoomId = roomId === 'new' ? generateRoomId() : roomId;
+    socket.on('joinRoom', ({ roomId, name: playerName, team, persistentPlayerId }) => {
+      // Generate a random room ID if 'new' is passed
+      let actualRoomId: string;
+      if (roomId === 'new') {
+        actualRoomId = generateRandomId();
+      } else {
+        actualRoomId = roomId.toLowerCase().replace(/\s+/g, '-');
+      }
+      
       const roomIdObj = new RoomId(actualRoomId);
       
+      // Generate or use provided player ID
+      let playerId: string;
+      if (persistentPlayerId && persistentPlayerId.trim() !== '') {
+        playerId = persistentPlayerId;
+      } else {
+        playerId = generateRandomId();
+      }
+      
+      // Check for reconnection only if we have a persistent ID
+      if (persistentPlayerId && persistentPlayerId.trim() !== '') {
+        const existingGameRoom = gameRooms[roomIdObj.value];
+        const existingSetup = gameRoomSetups[roomIdObj.value];
+        
+        if (existingGameRoom) {
+          // Player reconnecting to active game
+          const existingPlayer = existingGameRoom.players.find(p => p.id.value === playerId);
+          
+          if (existingPlayer) {
+            // This is a reconnection - update socket mapping
+            const oldSocketId = playerSockets[playerId];
+            if (oldSocketId && oldSocketId !== socket.id) {
+              // Clean up old socket if it exists
+              delete socketPlayers[oldSocketId];
+            }
+            
+            playerSockets[playerId] = socket.id;
+            socketPlayers[socket.id] = { roomId: actualRoomId, playerId };
+            socket.join(actualRoomId);
+            
+            // Send current game state to reconnecting player
+            const frontendRoom = convertGameRoomToFrontendFormat(existingGameRoom);
+            const frontendPlayer = { 
+              id: playerId, 
+              name: existingPlayer.name.value, 
+              emoji: existingPlayer.emoji,
+              isReady: true 
+            };
+            
+            socket.emit('playerJoined', { 
+              room: frontendRoom, 
+              player: frontendPlayer 
+            });
+            
+            console.log(`${existingPlayer.name.value} reconnected to game ${actualRoomId}`);
+            return;
+          }
+        }
+        
+        if (existingSetup) {
+          // Player reconnecting to setup phase
+          const existingPlayer = existingSetup.players.find(p => p.id.value === playerId);
+          
+          if (existingPlayer) {
+            // This is a reconnection - update socket mapping
+            const oldSocketId = playerSockets[playerId];
+            if (oldSocketId && oldSocketId !== socket.id) {
+              delete socketPlayers[oldSocketId];
+            }
+            
+            playerSockets[playerId] = socket.id;
+            socketPlayers[socket.id] = { roomId: actualRoomId, playerId };
+            socket.join(actualRoomId);
+            
+            // Send current setup state to reconnecting player
+            const frontendRoom = convertSetupToFrontendFormat(existingSetup);
+            const frontendPlayer = { 
+              id: playerId, 
+              name: existingPlayer.name.value, 
+              emoji: existingPlayer.emoji,
+              isReady: false 
+            };
+            
+            socket.emit('playerJoined', { 
+              room: frontendRoom, 
+              player: frontendPlayer 
+            });
+            
+            console.log(`${existingPlayer.name.value} reconnected to setup ${actualRoomId}`);
+            return;
+          }
+        }
+      }
+      
+      // This is a new player joining
       // Initialize room setup if it doesn't exist
       if (!gameRoomSetups[roomIdObj.value]) {
         gameRoomSetups[roomIdObj.value] = new GameRoomSetup(roomIdObj);
       }
 
-      // Create player (team will be assigned when game starts)
-      const playerId = socket.id;
+      // Create new player
       const player = new Player(new PlayerId(playerId), new Name(playerName), new TeamId('unassigned'));
       gameRoomSetups[roomIdObj.value].addPlayer(player);
       
@@ -80,7 +170,85 @@ export function createGameServer(): ServerInstance {
         player: frontendPlayer 
       });
 
+      // Emit room update to all players in room (including self)
+      io.to(actualRoomId).emit('roomUpdate', frontendRoom);
+
       console.log(`${playerName} joined room ${actualRoomId}`);
+    });
+
+    socket.on('startGame', ({ roomId }) => {
+      const actualRoomId = roomId.toLowerCase().replace(/\s+/g, '-');
+      const roomIdObj = new RoomId(actualRoomId);
+      
+      const setup = gameRoomSetups[roomIdObj.value];
+      if (!setup) {
+        console.log(`Cannot start game: Setup not found for room ${actualRoomId}`);
+        return;
+      }
+
+      if (setup.players.length < 6) {
+        console.log(`Cannot start game: Not enough players (${setup.players.length}/6) in room ${actualRoomId}`);
+        return;
+      }
+
+      try {
+        // Start the game
+        const gameRoom = GameRoom.fromSetup(setup);
+        
+        // Move from setup to active games
+        gameRooms[roomIdObj.value] = gameRoom;
+        delete gameRoomSetups[roomIdObj.value];
+        
+        // Convert to frontend format and notify all players
+        const frontendRoom = convertGameRoomToFrontendFormat(gameRoom);
+        
+        io.to(actualRoomId).emit('gameStarted', frontendRoom);
+        io.to(actualRoomId).emit('roomUpdate', frontendRoom);
+        
+        console.log(`Game started in room ${actualRoomId} with ${gameRoom.players.length} players`);
+      } catch (error) {
+        console.error(`Error starting game in room ${actualRoomId}:`, error);
+        socket.emit('error', { message: 'Failed to start game' });
+      }
+    });
+
+    socket.on('makeMove', ({ roomId, calledNameValue }) => {
+      const actualRoomId = roomId.toLowerCase().replace(/\s+/g, '-');
+      const roomIdObj = new RoomId(actualRoomId);
+      
+      const gameRoom = gameRooms[roomIdObj.value];
+      if (!gameRoom) {
+        console.log(`Cannot make move: Game not found for room ${actualRoomId}`);
+        return;
+      }
+
+      const playerInfo = socketPlayers[socket.id];
+      if (!playerInfo) {
+        console.log(`Cannot make move: Player not found for socket ${socket.id}`);
+        return;
+      }
+
+      try {
+        // Make the move
+        const result = makeMove(gameRoom, calledNameValue);
+        
+        // Convert to frontend format and notify all players
+        const frontendRoom = convertGameRoomToFrontendFormat(gameRoom);
+        
+        io.to(actualRoomId).emit('moveMade', frontendRoom);
+        io.to(actualRoomId).emit('roomUpdate', frontendRoom);
+        
+        // Check if game is finished
+        if (result.winner) {
+          io.to(actualRoomId).emit('gameFinished', { winner: result.winner });
+          gameRoom.state = 'finished';
+        }
+        
+        console.log(`Move made in room ${actualRoomId}: called ${calledNameValue}`);
+      } catch (error) {
+        console.error(`Error making move in room ${actualRoomId}:`, error);
+        socket.emit('error', { message: 'Failed to make move' });
+      }
     });
 
     socket.on('takeSeat', ({ seatIndex }) => {
@@ -125,43 +293,6 @@ export function createGameServer(): ServerInstance {
 
       const frontendRoom = convertSetupToFrontendFormat(setup);
       io.to(playerInfo.roomId).emit('emojiChanged', { room: frontendRoom });
-    });
-
-    socket.on('startGame', () => {
-      const playerInfo = socketPlayers[socket.id];
-      if (!playerInfo) return;
-
-      const setup = gameRoomSetups[playerInfo.roomId];
-      if (!setup || setup.players.length < 6) { // Minimum 6 players for a good game
-        socket.emit('error', 'Need at least 6 players to start game');
-        return;
-      }
-
-      // Create game room
-      const gameRoom = GameRoom.fromSetup(setup);
-      gameRooms[playerInfo.roomId] = gameRoom;
-      
-      // Delete setup as game has started
-      delete gameRoomSetups[playerInfo.roomId];
-
-      // Convert to frontend format
-      const frontendRoom = convertGameRoomToFrontendFormat(gameRoom);
-      
-      io.to(playerInfo.roomId).emit('gameStarted', { room: frontendRoom });
-      console.log(`Game started in room ${playerInfo.roomId}`);
-    });
-
-    socket.on('makeMove', ({ fromSeat, toSeat }) => {
-      const playerInfo = socketPlayers[socket.id];
-      if (!playerInfo) return;
-
-      const room = gameRooms[playerInfo.roomId];
-      if (!room || room.state !== 'started') return;
-
-      // For now, this is a placeholder - actual move logic needs frontend calling names
-      // Will be implemented when we add the name-calling interface
-      const frontendRoom = convertGameRoomToFrontendFormat(room);
-      io.to(playerInfo.roomId).emit('moveMade', { room: frontendRoom });
     });
 
     socket.on('callName', ({ name }) => {
@@ -220,31 +351,49 @@ export function createGameServer(): ServerInstance {
       
       const playerInfo = socketPlayers[socket.id];
       if (playerInfo) {
-        // Same logic as leaveRoom
-        if (gameRoomSetups[playerInfo.roomId]) {
-          const setup = gameRoomSetups[playerInfo.roomId];
-          setup.players = setup.players.filter(p => p.id.value !== playerInfo.playerId);
+        // Check if player is in an active game
+        const activeGame = gameRooms[playerInfo.roomId];
+        
+        if (activeGame) {
+          // Player is in active game - don't remove them, just clear socket mapping
+          // They can reconnect later
+          delete socketPlayers[socket.id];
+          // Keep playerSockets[playerInfo.playerId] for potential reconnection
+          console.log(`Player ${playerInfo.playerId} disconnected from active game ${playerInfo.roomId} but can reconnect`);
+        } else if (gameRoomSetups[playerInfo.roomId]) {
+          // Player is in setup phase - remove them after a delay to allow quick reconnection
+          setTimeout(() => {
+            // Check if they haven't reconnected
+            if (!playerSockets[playerInfo.playerId] || playerSockets[playerInfo.playerId] === socket.id) {
+              const setup = gameRoomSetups[playerInfo.roomId];
+              if (setup) {
+                setup.players = setup.players.filter(p => p.id.value !== playerInfo.playerId);
+                
+                if (setup.players.length === 0) {
+                  delete gameRoomSetups[playerInfo.roomId];
+                } else {
+                  const frontendRoom = convertSetupToFrontendFormat(setup);
+                  io.to(playerInfo.roomId).emit('playerLeft', { room: frontendRoom });
+                }
+              }
+              delete playerSockets[playerInfo.playerId];
+            }
+          }, 10000); // 10 second grace period for reconnection
           
-          if (setup.players.length === 0) {
-            delete gameRoomSetups[playerInfo.roomId];
-          } else {
-            const frontendRoom = convertSetupToFrontendFormat(setup);
-            socket.to(playerInfo.roomId).emit('playerLeft', { room: frontendRoom });
-          }
+          delete socketPlayers[socket.id];
         }
-
-        delete playerSockets[playerInfo.playerId];
-        delete socketPlayers[socket.id];
       }
     });
   });
 
   // Helper functions
-  function generateRoomId(): string {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
-  }
+function generateRoomId(): string {
+  return Math.random().toString(36).substr(2, 9);
+}
 
-  function convertSetupToFrontendFormat(setup: GameRoomSetup) {
+function generateRandomId(): string {
+  return Math.random().toString(36).substr(2, 9) + Math.random().toString(36).substr(2, 9);
+}  function convertSetupToFrontendFormat(setup: GameRoomSetup) {
     const numPlayers = setup.players.length;
     // Create seats array based on actual number of players
     const seats: any[] = Array(numPlayers).fill(null);
@@ -280,7 +429,8 @@ export function createGameServer(): ServerInstance {
       teams: { A: teamA, B: teamB },
       currentPlayerIndex: -1,
       gamePhase: 'setup' as const,
-      couchSeats
+      couchSeats,
+      players: setup.players // Add players for test compatibility
     };
   }
 
@@ -308,12 +458,16 @@ export function createGameServer(): ServerInstance {
       seats,
       teams,
       currentPlayerIndex: gameRoom.currentTurn,
+      currentTurn: gameRoom.currentTurn, // Add currentTurn for test compatibility
       gamePhase: gameRoom.state === 'started' ? 'playing' as const : 'finished' as const,
+      state: gameRoom.state, // Add state for test compatibility
+      emptySeat: gameRoom.emptySeat, // Add emptySeat for test compatibility
       couchSeats: gameRoom.couchSeats,
       secretNames: gameRoom.players.map(p => ({ 
         playerId: p.id.value, 
         secretName: p.secretName?.value 
-      }))
+      })),
+      players: gameRoom.players // Add players for test compatibility
     };
   }
 

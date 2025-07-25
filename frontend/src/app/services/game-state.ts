@@ -1,5 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { GameRoom, Player, SocketService } from './socket';
+import { PlayerIdentityService } from './player-identity';
 
 @Injectable({
   providedIn: 'root'
@@ -54,7 +55,10 @@ export class GameStateService {
     return hasEnoughPlayers && teamASizeOk && teamBSizeOk && room.gamePhase === 'setup';
   });
 
-  constructor(private socketService: SocketService) {
+  constructor(
+    private socketService: SocketService,
+    private playerIdentityService: PlayerIdentityService
+  ) {
     this.initializeSubscriptions();
   }
 
@@ -77,10 +81,16 @@ export class GameStateService {
     switch (event.type) {
       case 'playerJoined':
         this.updateRoom(event.data.room);
-        // Only update currentPlayer if this is our join response (id is empty or matches)
+        // Update currentPlayer if this matches our persistent ID
         const localPlayer = this.currentPlayer();
-        if (event.data.player && (localPlayer?.id === '' || event.data.player.id === localPlayer?.id)) {
-          this.currentPlayer.set(event.data.player);
+        const persistentId = this.playerIdentityService.getOrCreatePlayerId();
+        
+        if (event.data.player && event.data.player.id === persistentId) {
+          // This is our player data from the server, update our local state
+          this.currentPlayer.set({
+            ...event.data.player,
+            id: persistentId // Ensure we keep our persistent ID
+          });
         }
         break;
 
@@ -117,6 +127,10 @@ export class GameStateService {
         this.updateRoom(event.data.room);
         break;
 
+      case 'roomUpdate':
+        this.updateRoom(event.data);
+        break;
+
       default:
         console.warn('Unknown game event:', event);
     }
@@ -139,13 +153,16 @@ export class GameStateService {
   }
 
   joinRoom(roomId: string, playerName: string): void {
+    // Get or create persistent player ID
+    const persistentPlayerId = this.playerIdentityService.getOrCreatePlayerId();
+    
     this.currentPlayer.set({
-      id: '', // Will be set by server response
+      id: persistentPlayerId, // Use persistent ID
       name: playerName,
       emoji: null,
       isReady: false
     });
-    this.socketService.joinRoom(roomId, playerName);
+    this.socketService.joinRoom(roomId, playerName, persistentPlayerId);
   }
 
   leaveRoom(): void {
@@ -171,23 +188,45 @@ export class GameStateService {
       this.setError('Cannot start game yet');
       return;
     }
-    this.socketService.startGame();
+    const room = this.currentRoom();
+    if (room) {
+      this.socketService.startGame(room.id);
+    }
   }
 
-  makeMove(fromSeat: number, toSeat: number): void {
-    if (!this.canMakeMove(fromSeat, toSeat)) {
-      this.setError('Invalid move');
+  makeMove(calledNameValue: string): void {
+    if (!this.canCallName(calledNameValue)) {
+      this.setError('Cannot call this name');
       return;
     }
-    this.socketService.makeMove(fromSeat, toSeat);
+    const room = this.currentRoom();
+    if (!room) {
+      this.setError('No room found');
+      return;
+    }
+    this.socketService.makeMove(room.id, calledNameValue);
   }
 
   callPlayerName(name: string): void {
+    const room = this.currentRoom();
+    if (!room) {
+      this.setError('No room found');
+      return;
+    }
     this.socketService.callPlayerName(name);
   }
 
   setPlayerEmoji(emoji: string): void {
     this.socketService.setEmoji(emoji);
+  }
+
+  // Player identity management
+  clearPlayerIdentity(): void {
+    this.playerIdentityService.clearPlayerId();
+  }
+
+  hasStoredIdentity(): boolean {
+    return this.playerIdentityService.hasStoredPlayerId();
   }
 
   // Validation helpers
@@ -202,7 +241,7 @@ export class GameStateService {
     return room.gamePhase === 'waiting' || room.gamePhase === 'setup';
   }
 
-  private canMakeMove(fromSeat: number, toSeat: number): boolean {
+  private canCallName(name: string): boolean {
     const room = this.currentRoom();
     const player = this.currentPlayer();
 
@@ -210,12 +249,8 @@ export class GameStateService {
     if (room.gamePhase !== 'playing') return false;
     if (!this.isCurrentPlayer()) return false;
 
-    // Check if from seat contains current player
-    const fromPlayer = room.seats[fromSeat];
-    if (!fromPlayer || fromPlayer.id !== player.id) return false;
-
-    // Check if to seat is empty
-    return room.seats[toSeat] === null;
+    // Check if the name is a valid secret name
+    return room.secretNames?.some(sn => sn.secretName === name) ?? false;
   }
 
   // Utility methods

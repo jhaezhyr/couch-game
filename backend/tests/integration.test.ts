@@ -80,13 +80,13 @@ describe('WebSocket Integration Tests', () => {
     });
 
     // First player joins
-    client1.emit('join-room', { roomId: 'test-room', name: 'Player1', team: 'A' });
+    client1.emit('join-room', { roomId: 'test-room', name: 'Player1', team: 'A', persistentPlayerId: undefined });
     
     // Wait for room update
     await new Promise(resolve => setTimeout(resolve, 100));
     
     // Second player joins
-    client2.emit('join-room', { roomId: 'test-room', name: 'Player2', team: 'B' });
+    client2.emit('join-room', { roomId: 'test-room', name: 'Player2', team: 'B', persistentPlayerId: undefined });
     
     // Wait for room updates
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -114,9 +114,10 @@ describe('WebSocket Integration Tests', () => {
     // All players join the room
     for (let i = 0; i < 12; i++) {
       clients[i].emit('join-room', { 
-        roomId: 'test-game', 
-        name: `Player${i}`, 
-        team: i % 2 === 0 ? 'A' : 'B' 
+        roomId: 'large-room', 
+        name: `Player${i + 1}`, 
+        team: ['A', 'B'][i % 2] as 'A' | 'B',
+        persistentPlayerId: undefined
       });
     }
     
@@ -124,7 +125,7 @@ describe('WebSocket Integration Tests', () => {
     await new Promise(resolve => setTimeout(resolve, 200));
     
     // Start the game
-    clients[0].emit('start-game', { roomId: 'test-game' });
+    clients[0].emit('start-game', { roomId: 'large-room' });
     
     // Wait for game start
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -170,7 +171,8 @@ describe('WebSocket Integration Tests', () => {
       clients[i].emit('join-room', { 
         roomId: 'move-test', 
         name: `Player${i}`, 
-        team: i % 2 === 0 ? 'A' : 'B' 
+        team: i % 2 === 0 ? 'A' : 'B',
+        persistentPlayerId: undefined
       });
     }
     
@@ -207,8 +209,8 @@ describe('WebSocket Integration Tests', () => {
     const client2 = await createClient();
     
     // Join room
-    client1.emit('join-room', { roomId: 'disconnect-test', name: 'Player1', team: 'A' });
-    client2.emit('join-room', { roomId: 'disconnect-test', name: 'Player2', team: 'B' });
+    client1.emit('join-room', { roomId: 'disconnect-test', name: 'Player1', team: 'A', persistentPlayerId: undefined });
+    client2.emit('join-room', { roomId: 'disconnect-test', name: 'Player2', team: 'B', persistentPlayerId: undefined });
     
     await new Promise(resolve => setTimeout(resolve, 100));
     
@@ -218,7 +220,7 @@ describe('WebSocket Integration Tests', () => {
     await new Promise(resolve => setTimeout(resolve, 100));
     
     // Verify other client can still emit events
-    client2.emit('join-room', { roomId: 'disconnect-test', name: 'Player3', team: 'A' });
+    client2.emit('join-room', { roomId: 'disconnect-test', name: 'Player3', team: 'A', persistentPlayerId: undefined });
     
     await new Promise(resolve => setTimeout(resolve, 100));
     
