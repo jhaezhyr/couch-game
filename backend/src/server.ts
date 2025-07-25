@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import { Request, Response } from 'express';
 import { Player } from './models/player';
 import { GameRoom } from './models/gameRoom';
+import { GameRoomSetup } from './models/gameRoomSetup';
 import { PlayerId } from './models/playerId';
 import { RoomId } from './models/roomId';
 import { Name } from './models/name';
@@ -18,7 +19,8 @@ const io = new Server(server, {
   }
 });
 
-// In-memory game rooms
+// In-memory game room setups and active games
+const gameRoomSetups: { [roomId: string]: GameRoomSetup } = {};
 const gameRooms: { [roomId: string]: GameRoom } = {};
 
 app.get('/', (req: Request, res: Response) => {
@@ -30,58 +32,77 @@ io.on('connection', (socket) => {
 
   socket.on('join-room', ({ roomId, name, team }) => {
     const roomIdObj = new RoomId(roomId);
-    if (!gameRooms[roomIdObj.value]) {
-      gameRooms[roomIdObj.value] = new GameRoom(roomIdObj);
+    if (!gameRoomSetups[roomIdObj.value]) {
+      gameRoomSetups[roomIdObj.value] = new GameRoomSetup(roomIdObj);
     }
-    const player = new Player(new PlayerId(socket.id), new Name(name), team);
-    gameRooms[roomIdObj.value].addPlayer(player);
+    const player = new Player(new PlayerId(socket.id), new Name(name), new TeamId(team));
+    gameRoomSetups[roomIdObj.value].addPlayer(player);
     socket.join(roomIdObj.value);
-    io.to(roomIdObj.value).emit('room-update', gameRooms[roomIdObj.value]);
+    io.to(roomIdObj.value).emit('room-update', gameRoomSetups[roomIdObj.value]);
     console.log(`${name} joined room ${roomId} as ${team}`);
   });
 
   socket.on('start-game', ({ roomId }) => {
     const roomIdObj = new RoomId(roomId);
-    const room = gameRooms[roomIdObj.value];
-    if (room) {
-      // Assign teams (alternating order)
-      const shuffledPlayers = [...room.players].sort(() => Math.random() - 0.5);
-      room.teams.teamA = [];
-      room.teams.teamB = [];
-      shuffledPlayers.forEach((player, idx) => {
-        if (idx % 2 === 0) {
-          room.teams.teamA.push(player);
-          player.team = new TeamId('A');
-        } else {
-          room.teams.teamB.push(player);
-          player.team = new TeamId('B');
-        }
-      });
-
-      // Arrange seats: alternating team pattern, one empty seat
-      const totalSeats = room.players.length + 1;
-      room.seats = Array(totalSeats).fill(null);
-      let seatIdx = 0;
-      for (let i = 0; i < room.players.length; i++) {
-        room.seats[seatIdx] = shuffledPlayers[i].id;
-        shuffledPlayers[i].position = seatIdx;
-        seatIdx++;
-      }
-      room.emptySeat = seatIdx; // Last seat is empty
-
-      // Couch seats: first 4 seats
-      room.couchSeats = [0, 1, 2, 3];
-
-      // Secret name assignment
-      const names = shuffledPlayers.map(p => p.name);
-      const secretNames = [...names].sort(() => Math.random() - 0.5);
-      shuffledPlayers.forEach((player, idx) => {
-        player.secretName = secretNames[idx];
-      });
-
-      room.state = 'started';
-      io.to(roomIdObj.value).emit('game-started', room);
+    const setup = gameRoomSetups[roomIdObj.value];
+    if (setup) {
+      const gameRoom = GameRoom.fromSetup(setup);
+      gameRooms[roomIdObj.value] = gameRoom;
+      io.to(roomIdObj.value).emit('game-started', gameRoom);
       console.log(`Game started in room ${roomIdObj.value}`);
+    }
+  });
+
+  socket.on('make-move', ({ roomId, calledNameValue }) => {
+    const roomIdObj = new RoomId(roomId);
+    const room = gameRooms[roomIdObj.value];
+    if (!room || room.state !== 'started') return;
+
+    // Find the player holding the called name
+    const calledName = new Name(calledNameValue);
+    const mover = room.players.find(p => p.secretName && p.secretName.equals(calledName));
+    if (!mover) return;
+
+    // Find the empty seat and the player to the right of it
+    const emptySeatIdx = room.emptySeat;
+    if (emptySeatIdx === null) return;
+    const rightOfEmpty = (emptySeatIdx + 1) % room.seats.length;
+    const caller = room.players.find(p => p.position === rightOfEmpty);
+    if (!caller) return;
+
+    // Move the player holding the called name to the empty seat
+    if (mover.position === null) return;
+    room.seats[emptySeatIdx] = mover.id;
+    room.seats[mover.position] = null;
+    mover.position = emptySeatIdx;
+
+    // Switch secret names between caller and mover
+    const tempSecret = caller.secretName;
+    caller.secretName = mover.secretName;
+    mover.secretName = tempSecret;
+
+    // Update empty seat
+    room.emptySeat = mover.position;
+
+    // Update turn: next player to right of new empty seat
+    room.currentTurn = (room.emptySeat! + 1) % room.seats.length;
+
+    // Check win condition: all couch seats occupied by one team
+    const couchTeamIds = room.couchSeats.map(idx => {
+      const pid = room.seats[idx];
+      const player = room.players.find(p => pid && p.id.equals(pid));
+      return player?.team.value;
+    });
+    const allA = couchTeamIds.every(tid => tid === 'A');
+    const allB = couchTeamIds.every(tid => tid === 'B');
+    let winner: string | null = null;
+    if (allA) winner = 'A';
+    if (allB) winner = 'B';
+
+    io.to(roomIdObj.value).emit('move-made', room);
+    if (winner) {
+      room.state = 'finished';
+      io.to(roomIdObj.value).emit('game-finished', { winner });
     }
   });
 
