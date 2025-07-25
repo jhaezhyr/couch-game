@@ -113,6 +113,10 @@ export class GameStateService {
         this.setError(`${event.data.callerName} called "${event.data.calledName}"`);
         break;
 
+      case 'emojiChanged':
+        this.updateRoom(event.data.room);
+        break;
+
       default:
         console.warn('Unknown game event:', event);
     }
@@ -138,6 +142,7 @@ export class GameStateService {
     this.currentPlayer.set({
       id: '', // Will be set by server response
       name: playerName,
+      emoji: null,
       isReady: false
     });
     this.socketService.joinRoom(roomId, playerName);
@@ -179,6 +184,10 @@ export class GameStateService {
 
   callPlayerName(name: string): void {
     this.socketService.callPlayerName(name);
+  }
+
+  setPlayerEmoji(emoji: string): void {
+    this.socketService.setEmoji(emoji);
   }
 
   // Validation helpers

@@ -66,7 +66,7 @@ export function createGameServer(): ServerInstance {
 
       // Convert to frontend format
       const frontendRoom = convertSetupToFrontendFormat(gameRoomSetups[roomIdObj.value]);
-      const frontendPlayer = { id: playerId, name: playerName, isReady: false };
+      const frontendPlayer = { id: playerId, name: playerName, emoji: null, isReady: false };
 
       // Emit to the joining player
       socket.emit('playerJoined', { 
@@ -108,6 +108,23 @@ export function createGameServer(): ServerInstance {
 
       const frontendRoom = convertSetupToFrontendFormat(setup);
       io.to(playerInfo.roomId).emit('seatTaken', { room: frontendRoom });
+    });
+
+    socket.on('setEmoji', ({ emoji }) => {
+      const playerInfo = socketPlayers[socket.id];
+      if (!playerInfo) return;
+
+      const setup = gameRoomSetups[playerInfo.roomId];
+      if (!setup) return;
+
+      // Find player and set emoji
+      const player = setup.players.find(p => p.id.value === playerInfo.playerId);
+      if (!player) return;
+
+      player.emoji = emoji;
+
+      const frontendRoom = convertSetupToFrontendFormat(setup);
+      io.to(playerInfo.roomId).emit('emojiChanged', { room: frontendRoom });
     });
 
     socket.on('startGame', () => {
@@ -236,7 +253,8 @@ export function createGameServer(): ServerInstance {
     setup.players.forEach((player, index) => {
       seats[index] = {
         id: player.id.value,
-        name: player.name.value
+        name: player.name.value,
+        emoji: player.emoji
       };
     });
 
@@ -274,7 +292,8 @@ export function createGameServer(): ServerInstance {
       const player = gameRoom.players.find(p => p.id.equals(seat));
       return player ? {
         id: player.id.value,
-        name: player.name.value
+        name: player.name.value,
+        emoji: player.emoji
       } : null;
     });
 

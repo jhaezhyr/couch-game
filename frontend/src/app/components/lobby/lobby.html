@@ -57,6 +57,26 @@
             }
           }
         </div>
+        
+        <div class="emoji-picker card">
+          <h3>Choose Your Avatar</h3>
+          <div class="emoji-grid">
+            @for (emoji of emojiBank; track emoji) {
+              <button 
+                type="button"
+                class="emoji-btn" 
+                [class.selected]="gameState.player()?.emoji === emoji"
+                (click)="setEmoji(emoji)">
+                {{ emoji }}
+              </button>
+            }
+          </div>
+          @if (gameState.player()?.emoji) {
+            <p class="current-emoji">Your avatar: {{ gameState.player()?.emoji }}</p>
+          } @else {
+            <p class="current-emoji">Select an emoji above</p>
+          }
+        </div>
       }
 
       @if (gameState.gamePhase() === 'playing') {
@@ -104,7 +124,12 @@
                 [attr.aria-label]="seat ? 'Seat for ' + seat.name : 'Empty seat'"
               >
                 @if (seat) {
-                  <span class="seat-name">{{ seat.name }}</span>
+                  <div class="seat-content">
+                    @if (seat.emoji) {
+                      <span class="seat-emoji">{{ seat.emoji }}</span>
+                    }
+                    <span class="seat-name">{{ seat.name }}</span>
+                  </div>
                 } @else {
                   <span class="seat-placeholder">+</span>
                 }
@@ -122,7 +147,12 @@
               <h4>Team A</h4>
               <div class="team-members">
                 @for (playerId of (gameState.room()?.teams?.A || []); track playerId) {
-                  <span class="team-member">{{ getPlayerName(playerId) }}</span>
+                  <span class="team-member">
+                    @if (getPlayerEmoji(playerId)) {
+                      <span class="team-member-emoji">{{ getPlayerEmoji(playerId) }}</span>
+                    }
+                    <span class="team-member-name">{{ getPlayerName(playerId) }}</span>
+                  </span>
                 }
               </div>
             </div>
@@ -130,7 +160,12 @@
               <h4>Team B</h4>
               <div class="team-members">
                 @for (playerId of (gameState.room()?.teams?.B || []); track playerId) {
-                  <span class="team-member">{{ getPlayerName(playerId) }}</span>
+                  <span class="team-member">
+                    @if (getPlayerEmoji(playerId)) {
+                      <span class="team-member-emoji">{{ getPlayerEmoji(playerId) }}</span>
+                    }
+                    <span class="team-member-name">{{ getPlayerName(playerId) }}</span>
+                  </span>
                 }
               </div>
             </div>

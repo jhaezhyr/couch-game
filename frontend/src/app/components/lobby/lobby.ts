@@ -12,6 +12,15 @@ import { GameStateService } from '../../services/game-state';
 export class Lobby {
   playerName = signal('');
   roomId = signal('');
+  
+  // Cute emoji bank for player avatars
+  readonly emojiBank = [
+    '🐱', '🐶', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
+    '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐥',
+    '🦄', '🐢', '🐙', '🦀', '🐝', '🦋', '🐌', '🐛',
+    '🌸', '🌺', '🌻', '🌼', '🌷', '🌹', '🌟', '⭐',
+    '🍄', '🍓', '🍊', '🍋', '🍒', '🥝', '🍇', '🥥'
+  ];
 
   constructor(public gameState: GameStateService) {}
 
@@ -65,6 +74,14 @@ export class Lobby {
     return player?.name || 'Unknown';
   }
 
+  getPlayerEmoji(playerId: string): string | null {
+    const room = this.gameState.room();
+    if (!room) return null;
+
+    const player = room.seats.find(seat => seat?.id === playerId);
+    return player?.emoji || null;
+  }
+
   getCurrentPlayerName(): string {
     const room = this.gameState.room();
     if (!room) return '';
@@ -97,6 +114,10 @@ export class Lobby {
 
   callName(name: string): void {
     this.gameState.callPlayerName(name);
+  }
+
+  setEmoji(emoji: string): void {
+    this.gameState.setPlayerEmoji(emoji);
   }
 
   getCircularPosition(seatIndex: number, totalSeats: number): { x: string; y: string } {

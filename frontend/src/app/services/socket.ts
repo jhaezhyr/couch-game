@@ -6,6 +6,7 @@ import { Observable, Subject } from 'rxjs';
 export interface Player {
   id: string;
   name: string;
+  emoji: string | null;
   isReady: boolean;
 }
 
@@ -23,7 +24,7 @@ export interface GameRoom {
 }
 
 export interface GameEvent {
-  type: 'playerJoined' | 'playerLeft' | 'seatTaken' | 'teamAssigned' | 'gameStarted' | 'moveMade' | 'gameFinished' | 'nameCalled';
+  type: 'playerJoined' | 'playerLeft' | 'seatTaken' | 'teamAssigned' | 'gameStarted' | 'moveMade' | 'gameFinished' | 'nameCalled' | 'emojiChanged';
   data?: any;
 }
 
@@ -107,6 +108,10 @@ export class SocketService {
     this.socket.on('nameCalled', (data) => {
       this.gameEventSubject.next({ type: 'nameCalled', data });
     });
+
+    this.socket.on('emojiChanged', (data) => {
+      this.gameEventSubject.next({ type: 'emojiChanged', data });
+    });
   }
 
   // Game actions
@@ -136,6 +141,10 @@ export class SocketService {
 
   callPlayerName(name: string): void {
     this.socket?.emit('callName', { name });
+  }
+
+  setEmoji(emoji: string): void {
+    this.socket?.emit('setEmoji', { emoji });
   }
 
   disconnect(): void {
