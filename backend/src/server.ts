@@ -9,6 +9,7 @@ import { PlayerId } from './models/playerId';
 import { RoomId } from './models/roomId';
 import { Name } from './models/name';
 import { TeamId } from './models/teamId';
+import { makeMove } from './models/gameLogic';
 
 const app = express();
 const server = http.createServer(app);
@@ -58,50 +59,10 @@ io.on('connection', (socket) => {
     const room = gameRooms[roomIdObj.value];
     if (!room || room.state !== 'started') return;
 
-    // Find the player holding the called name
-    const calledName = new Name(calledNameValue);
-    const mover = room.players.find(p => p.secretName && p.secretName.equals(calledName));
-    if (!mover) return;
-
-    // Find the empty seat and the player to the right of it
-    const emptySeatIdx = room.emptySeat;
-    if (emptySeatIdx === null) return;
-    const rightOfEmpty = (emptySeatIdx + 1) % room.seats.length;
-    const caller = room.players.find(p => p.position === rightOfEmpty);
-    if (!caller) return;
-
-    // Move the player holding the called name to the empty seat
-    if (mover.position === null) return;
-    room.seats[emptySeatIdx] = mover.id;
-    room.seats[mover.position] = null;
-    mover.position = emptySeatIdx;
-
-    // Switch secret names between caller and mover
-    const tempSecret = caller.secretName;
-    caller.secretName = mover.secretName;
-    mover.secretName = tempSecret;
-
-    // Update empty seat
-    room.emptySeat = mover.position;
-
-    // Update turn: next player to right of new empty seat
-    room.currentTurn = (room.emptySeat! + 1) % room.seats.length;
-
-    // Check win condition: all couch seats occupied by one team
-    const couchTeamIds = room.couchSeats.map(idx => {
-      const pid = room.seats[idx];
-      const player = room.players.find(p => pid && p.id.equals(pid));
-      return player?.team.value;
-    });
-    const allA = couchTeamIds.every(tid => tid === 'A');
-    const allB = couchTeamIds.every(tid => tid === 'B');
-    let winner: string | null = null;
-    if (allA) winner = 'A';
-    if (allB) winner = 'B';
+    const { winner } = makeMove(room, calledNameValue);
 
     io.to(roomIdObj.value).emit('move-made', room);
     if (winner) {
-      room.state = 'finished';
       io.to(roomIdObj.value).emit('game-finished', { winner });
     }
   });
