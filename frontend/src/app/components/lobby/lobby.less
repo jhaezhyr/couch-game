@@ -1,0 +1,238 @@
+// Import global variables
+@import '../../../styles.less';
+
+.lobby-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.lobby-header {
+  text-align: center;
+  margin-bottom: 30px;
+
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    background: linear-gradient(45deg, @player-color, @glow-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.error-message {
+  background: fade(@glow-error, 20%);
+  color: @glow-error;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 1px solid @glow-error;
+  margin: 20px 0;
+  text-align: center;
+  .glow(@glow-error, 0.5);
+}
+
+.connection-panel, .room-panel {
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+
+  h2 {
+    margin-bottom: 20px;
+    color: @primary-text;
+  }
+}
+
+.connection-form, .room-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  .input {
+    font-size: 1.1rem;
+    padding: 15px;
+  }
+
+  .btn {
+    font-size: 1.1rem;
+    padding: 15px 30px;
+  }
+}
+
+.game-room {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.room-info {
+  text-align: center;
+
+  h2 {
+    margin-bottom: 10px;
+    color: @glow-primary;
+  }
+
+  .game-phase {
+    font-size: 1.2rem;
+    text-transform: capitalize;
+    margin-bottom: 10px;
+  }
+
+  .player-info, .team-info {
+    margin: 5px 0;
+    color: @secondary-text;
+  }
+}
+
+.couch-area {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.couch {
+  .seats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding: 20px;
+    max-width: 600px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      padding: 15px;
+    }
+  }
+}
+
+.seat {
+  position: relative;
+
+  .seat-name {
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .seat-placeholder {
+    font-size: 2rem;
+    color: @muted-text;
+  }
+
+  &.my-seat {
+    border-color: @glow-primary;
+    .glow(@glow-primary, 1.5);
+  }
+
+  &.current-player.my-seat {
+    .pulse(@glow-primary, 1s);
+  }
+}
+
+.team-assignment {
+  .teams-display {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin: 20px 0;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+  }
+
+  .team {
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+
+    h4 {
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+
+    &.team-a {
+      background: fade(@team-a-color, 10%);
+      border: 1px solid fade(@team-a-color, 30%);
+
+      h4 {
+        color: @team-a-color;
+      }
+    }
+
+    &.team-b {
+      background: fade(@team-b-color, 10%);
+      border: 1px solid fade(@team-b-color, 30%);
+
+      h4 {
+        color: @team-b-color;
+      }
+    }
+  }
+
+  .team-members {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .team-member {
+    background: @secondary-bg;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid @accent-bg;
+  }
+
+  .setup-instructions {
+    text-align: center;
+    color: @muted-text;
+    margin-top: 20px;
+    font-style: italic;
+  }
+}
+
+.game-controls {
+  text-align: center;
+
+  .current-turn {
+    color: @glow-success;
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+
+  .waiting-turn {
+    color: @muted-text;
+    font-style: italic;
+  }
+}
+
+.room-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+// Pulse animation classes for buttons
+.pulse-success {
+  animation: pulse-success 2s infinite ease-in-out;
+}
+
+.pulse-primary {
+  animation: pulse-primary 2s infinite ease-in-out;
+}
+
+.pulse-warning {
+  animation: pulse-warning 2s infinite ease-in-out;
+}
+
+.pulse-error {
+  animation: pulse-error 2s infinite ease-in-out;
+}

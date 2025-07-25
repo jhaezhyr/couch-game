@@ -1,0 +1,131 @@
+<div class="lobby-container">
+  <div class="lobby-header">
+    <h1>Couch Game Lobby</h1>
+    @if (gameState.error()) {
+      <div class="error-message">{{ gameState.error() }}</div>
+    }
+  </div>
+
+  @if (!gameState.connected()) {
+    <div class="connection-panel card">
+      <h2>Connect to Game</h2>
+      <div class="connection-form">
+        <input
+          class="input"
+          [value]="playerName()"
+          (input)="playerName.set($any($event.target).value)"
+          placeholder="Enter your name"
+          (keyup.enter)="connect()"
+        />
+        <button class="btn primary" (click)="connect()" [disabled]="!playerName().trim()">
+          Connect
+        </button>
+      </div>
+    </div>
+  } @else if (!gameState.room()) {
+    <div class="room-panel card">
+      <h2>Join or Create Room</h2>
+      <div class="room-form">
+        <input
+          class="input"
+          [value]="roomId()"
+          (input)="roomId.set($any($event.target).value)"
+          placeholder="Enter room ID (or leave empty for new room)"
+          (keyup.enter)="joinRoom()"
+        />
+        <button class="btn success" (click)="joinRoom()">
+          @if (roomId().trim()) {
+            Join Room
+          } @else {
+            Create New Room
+          }
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="game-room">
+      <div class="room-info card">
+        <h2>Room: {{ gameState.room()?.id }}</h2>
+        <p class="game-phase">Phase: {{ gameState.gamePhase() }}</p>
+        @if (gameState.player()) {
+          <p class="player-info">Playing as: {{ gameState.player()?.name }}</p>
+          @if (gameState.myTeam()) {
+            <p class="team-info">Team: {{ gameState.myTeam() }}</p>
+          }
+        }
+      </div>
+
+      <div class="couch-area">
+        <div class="couch">
+          <div class="seats-grid">
+            @for (seat of gameState.room()?.seats; track $index) {
+              <div
+                class="seat"
+                [class.occupied]="seat !== null"
+                [class.current-player]="isCurrentPlayerSeat($index)"
+                [class.team-a]="getPlayerTeam(seat?.id) === 'A'"
+                [class.team-b]="getPlayerTeam(seat?.id) === 'B'"
+                [class.my-seat]="seat?.id === gameState.player()?.id"
+                (click)="takeSeat($index)"
+              >
+                @if (seat) {
+                  <span class="seat-name">{{ seat.name }}</span>
+                } @else {
+                  <span class="seat-placeholder">+</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      @if (gameState.gamePhase() === 'setup') {
+        <div class="team-assignment card">
+          <h3>Team Assignment</h3>
+          <div class="teams-display">
+            <div class="team team-a">
+              <h4>Team A</h4>
+              <div class="team-members">
+                @for (playerId of (gameState.room()?.teams?.A || []); track playerId) {
+                  <span class="team-member">{{ getPlayerName(playerId) }}</span>
+                }
+              </div>
+            </div>
+            <div class="team team-b">
+              <h4>Team B</h4>
+              <div class="team-members">
+                @for (playerId of (gameState.room()?.teams?.B || []); track playerId) {
+                  <span class="team-member">{{ getPlayerName(playerId) }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          @if (gameState.canStartGame()) {
+            <button class="btn success pulse-success" (click)="startGame()">
+              Start Game!
+            </button>
+          } @else {
+            <p class="setup-instructions">
+              Make sure all seats are filled and teams are balanced to start the game.
+            </p>
+          }
+        </div>
+      }
+
+      @if (gameState.gamePhase() === 'playing') {
+        <div class="game-controls card">
+          @if (gameState.isCurrentPlayer()) {
+            <p class="current-turn">It's your turn! Click on your seat, then click where you want to move.</p>
+          } @else {
+            <p class="waiting-turn">Waiting for {{ getCurrentPlayerName() }}'s move...</p>
+          }
+        </div>
+      }
+
+      <div class="room-actions">
+        <button class="btn error" (click)="leaveRoom()">Leave Room</button>
+      </div>
+    </div>
+  }
+</div>

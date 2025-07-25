@@ -1,0 +1,222 @@
+/* Global styles for Couch Game */
+
+// Color Variables
+@primary-bg: #1a1a1a;
+@secondary-bg: #2d2d2d;
+@accent-bg: #3a3a3a;
+@primary-text: #ffffff;
+@secondary-text: #cccccc;
+@muted-text: #888888;
+
+// Game Colors
+@player-color: #4a9eff;
+@team-a-color: #ff6b6b;
+@team-b-color: #51cf66;
+@empty-seat-color: #555555;
+
+// Glow Colors
+@glow-primary: #4a9eff;
+@glow-success: #51cf66;
+@glow-warning: #ffd43b;
+@glow-error: #ff6b6b;
+
+// Animation Timing
+@animation-fast: 0.2s;
+@animation-normal: 0.3s;
+@animation-slow: 0.5s;
+
+// Mixins for glow effects
+.glow(@color: @glow-primary; @intensity: 1) {
+  box-shadow: 0 0 (@intensity * 10px) fade(@color, 50%);
+  transition: box-shadow @animation-normal ease;
+
+  &:hover {
+    box-shadow: 0 0 (@intensity * 20px) fade(@color, 70%);
+  }
+}
+
+.pulse(@color: @glow-primary; @duration: 2s) {
+  &.pulse-primary {
+    animation: pulse-primary @duration infinite ease-in-out;
+  }
+  &.pulse-success {
+    animation: pulse-success @duration infinite ease-in-out;
+  }
+  &.pulse-warning {
+    animation: pulse-warning @duration infinite ease-in-out;
+  }
+  &.pulse-error {
+    animation: pulse-error @duration infinite ease-in-out;
+  }
+}
+
+// Pulse keyframes for different colors
+@keyframes pulse-primary {
+  0%, 100% { box-shadow: 0 0 5px fade(@glow-primary, 30%); }
+  50% { box-shadow: 0 0 20px fade(@glow-primary, 70%); }
+}
+
+@keyframes pulse-success {
+  0%, 100% { box-shadow: 0 0 5px fade(@glow-success, 30%); }
+  50% { box-shadow: 0 0 20px fade(@glow-success, 70%); }
+}
+
+@keyframes pulse-warning {
+  0%, 100% { box-shadow: 0 0 5px fade(@glow-warning, 30%); }
+  50% { box-shadow: 0 0 20px fade(@glow-warning, 70%); }
+}
+
+@keyframes pulse-error {
+  0%, 100% { box-shadow: 0 0 5px fade(@glow-error, 30%); }
+  50% { box-shadow: 0 0 20px fade(@glow-error, 70%); }
+}
+
+// Base body styles
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: @primary-bg;
+  color: @primary-text;
+  font: 16px/1.6 system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+// Common component styles
+.btn {
+  background: @secondary-bg;
+  color: @primary-text;
+  border: 1px solid @accent-bg;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all @animation-normal ease;
+  .glow(@glow-primary, 0.5);
+
+  &:hover {
+    background: @accent-bg;
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &.primary {
+    background: @player-color;
+    .glow(@glow-primary, 1);
+  }
+
+  &.success {
+    background: @team-b-color;
+    .glow(@glow-success, 1);
+  }
+
+  &.warning {
+    background: @glow-warning;
+    color: @primary-bg;
+    .glow(@glow-warning, 1);
+  }
+
+  &.error {
+    background: @team-a-color;
+    .glow(@glow-error, 1);
+  }
+}
+
+.card {
+  background: @secondary-bg;
+  border: 1px solid @accent-bg;
+  border-radius: 12px;
+  padding: 20px;
+  .glow(@glow-primary, 0.3);
+
+  &.active {
+    .glow(@glow-primary, 1);
+  }
+}
+
+.input {
+  background: @secondary-bg;
+  color: @primary-text;
+  border: 1px solid @accent-bg;
+  padding: 12px;
+  border-radius: 8px;
+  transition: all @animation-normal ease;
+
+  &:focus {
+    outline: none;
+    border-color: @player-color;
+    .glow(@glow-primary, 0.5);
+  }
+
+  &::placeholder {
+    color: @muted-text;
+  }
+}
+
+// Game-specific styles
+.seat {
+  background: @empty-seat-color;
+  border: 2px solid @accent-bg;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all @animation-normal ease;
+
+  &.occupied {
+    background: @player-color;
+    .glow(@glow-primary, 1);
+  }
+
+  &.team-a {
+    background: @team-a-color;
+    .glow(@glow-error, 1);
+  }
+
+  &.team-b {
+    background: @team-b-color;
+    .glow(@glow-success, 1);
+  }
+
+  &.current-player {
+    .pulse(@glow-primary, 1.5s);
+  }
+
+  &:hover:not(.occupied) {
+    background: fade(@player-color, 30%);
+    .glow(@glow-primary, 0.5);
+  }
+}
+
+.couch {
+  background: linear-gradient(135deg, @secondary-bg, @accent-bg);
+  border-radius: 20px;
+  padding: 40px;
+  border: 2px solid @accent-bg;
+  .glow(@glow-primary, 0.5);
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .seat {
+    width: 60px;
+    height: 60px;
+  }
+
+  .couch {
+    padding: 20px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    font: 14px/1.4 system-ui, -apple-system, sans-serif;
+  }
+}
