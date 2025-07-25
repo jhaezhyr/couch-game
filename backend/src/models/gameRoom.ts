@@ -60,8 +60,9 @@ export class GameRoom {
     // The empty seat remains null
     const emptySeat = shuffledPlayers.length; // Last seat is empty
 
-    // Couch seats: first 4 seats
-    const couchSeats = [0, 1, 2, 3];
+    // Dynamic couch seats: (num of players)/3, rounded down, minimum 2
+    const couchSize = Math.max(2, Math.floor(shuffledPlayers.length / 3));
+    const couchSeats = Array.from({ length: couchSize }, (_, i) => i);
 
     // Secret name assignment
     const names = shuffledPlayers.map(p => p.name);

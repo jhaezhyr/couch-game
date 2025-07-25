@@ -37,50 +37,212 @@ export function createGameServer(): ServerInstance {
     res.send('Couch Game backend is running.');
   });
 
+  // Track player-socket mapping
+  const playerSockets: { [playerId: string]: string } = {};
+  const socketPlayers: { [socketId: string]: { roomId: string; playerId: string } } = {};
+
   io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
-    socket.on('join-room', ({ roomId, name, team }) => {
-      const roomIdObj = new RoomId(roomId);
+    socket.on('joinRoom', ({ roomId, playerName }) => {
+      const actualRoomId = roomId === 'new' ? generateRoomId() : roomId;
+      const roomIdObj = new RoomId(actualRoomId);
+      
+      // Initialize room setup if it doesn't exist
       if (!gameRoomSetups[roomIdObj.value]) {
         gameRoomSetups[roomIdObj.value] = new GameRoomSetup(roomIdObj);
       }
-      const player = new Player(new PlayerId(socket.id), new Name(name), new TeamId(team));
+
+      // Create player (team will be assigned when game starts)
+      const playerId = socket.id;
+      const player = new Player(new PlayerId(playerId), new Name(playerName), new TeamId('unassigned'));
       gameRoomSetups[roomIdObj.value].addPlayer(player);
-      socket.join(roomIdObj.value);
-      io.to(roomIdObj.value).emit('room-update', gameRoomSetups[roomIdObj.value]);
-      console.log(`${name} joined room ${roomId} as ${team}`);
+      
+      // Track mappings
+      playerSockets[playerId] = socket.id;
+      socketPlayers[socket.id] = { roomId: actualRoomId, playerId };
+      
+      socket.join(actualRoomId);
+
+      // Convert to frontend format
+      const frontendRoom = convertSetupToFrontendFormat(gameRoomSetups[roomIdObj.value]);
+      const frontendPlayer = { id: playerId, name: playerName, isReady: false };
+
+      // Emit to the joining player
+      socket.emit('playerJoined', { 
+        room: frontendRoom, 
+        player: frontendPlayer 
+      });
+
+      // Emit to other players in room
+      socket.to(actualRoomId).emit('playerJoined', { 
+        room: frontendRoom, 
+        player: frontendPlayer 
+      });
+
+      console.log(`${playerName} joined room ${actualRoomId}`);
     });
 
-    socket.on('start-game', ({ roomId }) => {
-      const roomIdObj = new RoomId(roomId);
-      const setup = gameRoomSetups[roomIdObj.value];
-      if (setup) {
-        const gameRoom = GameRoom.fromSetup(setup);
-        gameRooms[roomIdObj.value] = gameRoom;
-        io.to(roomIdObj.value).emit('game-started', gameRoom);
-        console.log(`Game started in room ${roomIdObj.value}`);
+    socket.on('takeSeat', ({ seatIndex }) => {
+      const playerInfo = socketPlayers[socket.id];
+      if (!playerInfo) return;
+
+      const setup = gameRoomSetups[playerInfo.roomId];
+      if (!setup) return;
+
+      // For now, just emit back - actual seating logic will be implemented when we have proper seat management
+      const frontendRoom = convertSetupToFrontendFormat(setup);
+      io.to(playerInfo.roomId).emit('seatTaken', { room: frontendRoom });
+    });
+
+    socket.on('startGame', () => {
+      const playerInfo = socketPlayers[socket.id];
+      if (!playerInfo) return;
+
+      const setup = gameRoomSetups[playerInfo.roomId];
+      if (!setup || setup.players.length < 6) { // Minimum 6 players for a good game
+        socket.emit('error', 'Need at least 6 players to start game');
+        return;
       }
+
+      // Create game room
+      const gameRoom = GameRoom.fromSetup(setup);
+      gameRooms[playerInfo.roomId] = gameRoom;
+      
+      // Delete setup as game has started
+      delete gameRoomSetups[playerInfo.roomId];
+
+      // Convert to frontend format
+      const frontendRoom = convertGameRoomToFrontendFormat(gameRoom);
+      
+      io.to(playerInfo.roomId).emit('gameStarted', { room: frontendRoom });
+      console.log(`Game started in room ${playerInfo.roomId}`);
     });
 
-    socket.on('make-move', ({ roomId, calledNameValue }) => {
-      const roomIdObj = new RoomId(roomId);
-      const room = gameRooms[roomIdObj.value];
+    socket.on('makeMove', ({ fromSeat, toSeat }) => {
+      const playerInfo = socketPlayers[socket.id];
+      if (!playerInfo) return;
+
+      const room = gameRooms[playerInfo.roomId];
       if (!room || room.state !== 'started') return;
 
-      const { winner } = makeMove(room, calledNameValue);
+      // For now, this is a placeholder - actual move logic needs frontend calling names
+      // Will be implemented when we add the name-calling interface
+      const frontendRoom = convertGameRoomToFrontendFormat(room);
+      io.to(playerInfo.roomId).emit('moveMade', { room: frontendRoom });
+    });
 
-      io.to(roomIdObj.value).emit('move-made', room);
-      if (winner) {
-        io.to(roomIdObj.value).emit('game-finished', { winner });
+    socket.on('leaveRoom', () => {
+      const playerInfo = socketPlayers[socket.id];
+      if (!playerInfo) return;
+
+      // Remove player from room setup or game
+      if (gameRoomSetups[playerInfo.roomId]) {
+        const setup = gameRoomSetups[playerInfo.roomId];
+        setup.players = setup.players.filter(p => p.id.value !== playerInfo.playerId);
+        
+        if (setup.players.length === 0) {
+          delete gameRoomSetups[playerInfo.roomId];
+        } else {
+          const frontendRoom = convertSetupToFrontendFormat(setup);
+          socket.to(playerInfo.roomId).emit('playerLeft', { room: frontendRoom });
+        }
       }
+
+      socket.leave(playerInfo.roomId);
+      delete playerSockets[playerInfo.playerId];
+      delete socketPlayers[socket.id];
     });
 
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id);
-      // Optionally: remove player from gameRooms
+      
+      const playerInfo = socketPlayers[socket.id];
+      if (playerInfo) {
+        // Same logic as leaveRoom
+        if (gameRoomSetups[playerInfo.roomId]) {
+          const setup = gameRoomSetups[playerInfo.roomId];
+          setup.players = setup.players.filter(p => p.id.value !== playerInfo.playerId);
+          
+          if (setup.players.length === 0) {
+            delete gameRoomSetups[playerInfo.roomId];
+          } else {
+            const frontendRoom = convertSetupToFrontendFormat(setup);
+            socket.to(playerInfo.roomId).emit('playerLeft', { room: frontendRoom });
+          }
+        }
+
+        delete playerSockets[playerInfo.playerId];
+        delete socketPlayers[socket.id];
+      }
     });
   });
+
+  // Helper functions
+  function generateRoomId(): string {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+
+  function convertSetupToFrontendFormat(setup: GameRoomSetup) {
+    const numPlayers = setup.players.length;
+    // Create seats array based on actual number of players
+    const seats: any[] = Array(numPlayers).fill(null);
+    
+    // Place players in seats (for now, sequentially)
+    setup.players.forEach((player, index) => {
+      seats[index] = {
+        id: player.id.value,
+        name: player.name.value
+      };
+    });
+
+    // Auto-assign teams in alternating pattern for setup
+    const teamA: string[] = [];
+    const teamB: string[] = [];
+    
+    setup.players.forEach((player, index) => {
+      if (index % 2 === 0) {
+        teamA.push(player.id.value);
+      } else {
+        teamB.push(player.id.value);
+      }
+    });
+
+    return {
+      id: setup.roomId.value,
+      seats,
+      teams: { A: teamA, B: teamB },
+      currentPlayerIndex: -1,
+      gamePhase: 'setup' as const
+    };
+  }
+
+  function convertGameRoomToFrontendFormat(gameRoom: GameRoom) {
+    // Convert seats
+    const seats: any[] = gameRoom.seats.map(seat => {
+      if (seat === null) return null;
+      
+      const player = gameRoom.players.find(p => p.id.equals(seat));
+      return player ? {
+        id: player.id.value,
+        name: player.name.value
+      } : null;
+    });
+
+    // Convert teams
+    const teams = {
+      A: gameRoom.teams.teamA.map(p => p.id.value),
+      B: gameRoom.teams.teamB.map(p => p.id.value)
+    };
+
+    return {
+      id: gameRoom.roomId.value,
+      seats,
+      teams,
+      currentPlayerIndex: gameRoom.currentTurn,
+      gamePhase: gameRoom.state === 'started' ? 'playing' as const : 'finished' as const
+    };
+  }
 
   return {
     httpServer,

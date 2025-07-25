@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsc && node dist/server.js"
+    "test": "jest",
+    "start": "node dist/server.js",
+    "dev": "tsc && node dist/server.js",
+    "build": "tsc",
+    "test:watch": "jest --watch"
   },
   "keywords": [],
   "author": "",

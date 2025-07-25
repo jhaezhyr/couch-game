@@ -43,14 +43,15 @@ export class GameStateService {
     const room = this.currentRoom();
     if (!room) return false;
 
-    // Check if all seats are filled
-    const allSeatsFilled = room.seats.every(seat => seat !== null);
+    // Check if we have enough players (minimum 6)
+    const totalPlayers = room.seats.filter(seat => seat !== null).length;
+    const hasEnoughPlayers = totalPlayers >= 6;
 
-    // Check if teams are balanced
-    const teamASizeOk = room.teams.A.length >= 2;
-    const teamBSizeOk = room.teams.B.length >= 2;
+    // Check if teams are balanced (at least 3 per team for 6+ players)
+    const teamASizeOk = room.teams.A.length >= 3;
+    const teamBSizeOk = room.teams.B.length >= 3;
 
-    return allSeatsFilled && teamASizeOk && teamBSizeOk && room.gamePhase === 'setup';
+    return hasEnoughPlayers && teamASizeOk && teamBSizeOk && room.gamePhase === 'setup';
   });
 
   constructor(private socketService: SocketService) {
