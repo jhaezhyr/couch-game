@@ -72,4 +72,30 @@ export class Lobby {
     const currentPlayer = room.seats[room.currentPlayerIndex];
     return currentPlayer?.name || 'Unknown';
   }
+
+  // New methods for improved UX
+  isCouchSeat(seatIndex: number): boolean {
+    const room = this.gameState.room();
+    return room?.couchSeats?.includes(seatIndex) || false;
+  }
+
+  getMySecretName(): string {
+    const room = this.gameState.room();
+    const player = this.gameState.player();
+    if (!room || !player || !room.secretNames) return '';
+
+    const secretInfo = room.secretNames.find(s => s.playerId === player.id);
+    return secretInfo?.secretName || '';
+  }
+
+  getAllPlayerNames(): string[] {
+    const room = this.gameState.room();
+    if (!room || !room.secretNames) return [];
+
+    return room.secretNames.map(s => s.secretName).filter(name => name);
+  }
+
+  callName(name: string): void {
+    this.gameState.callPlayerName(name);
+  }
 }

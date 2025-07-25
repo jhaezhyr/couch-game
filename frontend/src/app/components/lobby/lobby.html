@@ -66,6 +66,7 @@
                 [class.team-a]="getPlayerTeam(seat?.id) === 'A'"
                 [class.team-b]="getPlayerTeam(seat?.id) === 'B'"
                 [class.my-seat]="seat?.id === gameState.player()?.id"
+                [class.couch-seat]="isCouchSeat($index)"
                 (click)="takeSeat($index)"
               >
                 @if (seat) {
@@ -116,9 +117,24 @@
       @if (gameState.gamePhase() === 'playing') {
         <div class="game-controls card">
           @if (gameState.isCurrentPlayer()) {
-            <p class="current-turn">It's your turn! Click on your seat, then click where you want to move.</p>
+            <div class="current-turn">
+              <h3>It's your turn!</h3>
+              <p>Your secret name: <strong>{{ getMySecretName() }}</strong></p>
+              <p>Call a name to make that person move to the empty seat:</p>
+              <div class="name-selection">
+                @for (name of getAllPlayerNames(); track name) {
+                  <button 
+                    class="btn primary name-btn" 
+                    (click)="callName(name)"
+                    [disabled]="name === getMySecretName()">
+                    {{ name }}
+                  </button>
+                }
+              </div>
+            </div>
           } @else {
             <p class="waiting-turn">Waiting for {{ getCurrentPlayerName() }}'s move...</p>
+            <p class="secret-name">Your secret name: <strong>{{ getMySecretName() }}</strong></p>
           }
         </div>
       }

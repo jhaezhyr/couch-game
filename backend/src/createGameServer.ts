@@ -90,7 +90,22 @@ export function createGameServer(): ServerInstance {
       const setup = gameRoomSetups[playerInfo.roomId];
       if (!setup) return;
 
-      // For now, just emit back - actual seating logic will be implemented when we have proper seat management
+      // During setup phase, allow seat swapping
+      const currentPlayerIndex = setup.players.findIndex(p => p.id.value === playerInfo.playerId);
+      if (currentPlayerIndex === -1) return;
+
+      // Check if target seat is available or different from current
+      if (seatIndex < 0 || seatIndex >= setup.players.length) return;
+      if (seatIndex === currentPlayerIndex) return; // Same seat
+
+      // Swap players at positions
+      const targetPlayerIndex = seatIndex;
+      if (targetPlayerIndex < setup.players.length) {
+        // Swap the players in the array
+        [setup.players[currentPlayerIndex], setup.players[targetPlayerIndex]] = 
+        [setup.players[targetPlayerIndex], setup.players[currentPlayerIndex]];
+      }
+
       const frontendRoom = convertSetupToFrontendFormat(setup);
       io.to(playerInfo.roomId).emit('seatTaken', { room: frontendRoom });
     });
@@ -130,6 +145,24 @@ export function createGameServer(): ServerInstance {
       // Will be implemented when we add the name-calling interface
       const frontendRoom = convertGameRoomToFrontendFormat(room);
       io.to(playerInfo.roomId).emit('moveMade', { room: frontendRoom });
+    });
+
+    socket.on('callName', ({ name }) => {
+      const playerInfo = socketPlayers[socket.id];
+      if (!playerInfo) return;
+
+      const room = gameRooms[playerInfo.roomId];
+      if (!room || room.state !== 'started') return;
+
+      // Find the calling player's name
+      const callingPlayer = room.players.find(p => p.id.value === playerInfo.playerId);
+      if (!callingPlayer) return;
+
+      // Broadcast the name call to all players
+      io.to(playerInfo.roomId).emit('nameCalled', { 
+        callerName: callingPlayer.name.value, 
+        calledName: name 
+      });
     });
 
     socket.on('leaveRoom', () => {
@@ -208,12 +241,17 @@ export function createGameServer(): ServerInstance {
       }
     });
 
+    // Calculate couch seats for display
+    const couchSize = Math.max(2, Math.floor(numPlayers / 3));
+    const couchSeats = Array.from({ length: couchSize }, (_, i) => i);
+
     return {
       id: setup.roomId.value,
       seats,
       teams: { A: teamA, B: teamB },
       currentPlayerIndex: -1,
-      gamePhase: 'setup' as const
+      gamePhase: 'setup' as const,
+      couchSeats
     };
   }
 
@@ -240,7 +278,12 @@ export function createGameServer(): ServerInstance {
       seats,
       teams,
       currentPlayerIndex: gameRoom.currentTurn,
-      gamePhase: gameRoom.state === 'started' ? 'playing' as const : 'finished' as const
+      gamePhase: gameRoom.state === 'started' ? 'playing' as const : 'finished' as const,
+      couchSeats: gameRoom.couchSeats,
+      secretNames: gameRoom.players.map(p => ({ 
+        playerId: p.id.value, 
+        secretName: p.secretName?.value 
+      }))
     };
   }
 

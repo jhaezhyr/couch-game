@@ -18,10 +18,12 @@ export interface GameRoom {
   };
   currentPlayerIndex: number;
   gamePhase: 'waiting' | 'setup' | 'playing' | 'finished';
+  couchSeats?: number[];
+  secretNames?: { playerId: string; secretName: string }[];
 }
 
 export interface GameEvent {
-  type: 'playerJoined' | 'playerLeft' | 'seatTaken' | 'teamAssigned' | 'gameStarted' | 'moveMade' | 'gameFinished';
+  type: 'playerJoined' | 'playerLeft' | 'seatTaken' | 'teamAssigned' | 'gameStarted' | 'moveMade' | 'gameFinished' | 'nameCalled';
   data?: any;
 }
 
@@ -101,6 +103,10 @@ export class SocketService {
     this.socket.on('gameFinished', (data) => {
       this.gameEventSubject.next({ type: 'gameFinished', data });
     });
+
+    this.socket.on('nameCalled', (data) => {
+      this.gameEventSubject.next({ type: 'nameCalled', data });
+    });
   }
 
   // Game actions
@@ -126,6 +132,10 @@ export class SocketService {
 
   makeMove(fromSeat: number, toSeat: number): void {
     this.socket?.emit('makeMove', { fromSeat, toSeat });
+  }
+
+  callPlayerName(name: string): void {
+    this.socket?.emit('callName', { name });
   }
 
   disconnect(): void {

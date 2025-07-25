@@ -170,6 +170,10 @@ export class GameStateService {
     this.socketService.makeMove(fromSeat, toSeat);
   }
 
+  callPlayerName(name: string): void {
+    this.socketService.callPlayerName(name);
+  }
+
   // Validation helpers
   private canTakeSeat(seatIndex: number): boolean {
     const room = this.currentRoom();
