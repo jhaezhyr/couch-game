@@ -19,7 +19,9 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.1.0",
     "@types/socket.io": "^3.0.1",
+    "@types/socket.io-client": "^1.4.36",
     "jest": "^30.0.5",
+    "socket.io-client": "^4.8.1",
     "ts-jest": "^29.4.0",
     "typescript": "^5.8.3"
   }
