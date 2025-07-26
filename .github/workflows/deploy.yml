@@ -45,7 +45,7 @@ jobs:
         
     - name: Deploy Backend
       run: |
-        scp -r backend/dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/www-data/couch-game/backend/
+        scp -r backend/dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/couch-game/backend/
         
     - name: Deploy Frontend
       run: |
