@@ -1,0 +1,40 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Attach",
+            "port": 9229,
+            "request": "attach",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+        },
+        {
+        "type": "node",
+        "request": "launch",
+        "name": "Launch Backend",
+        "program": "${workspaceFolder}/backend/src/index.ts",
+        "outFiles": ["${workspaceFolder}/backend/dist/**/*.js"],
+        "preLaunchTask": "build-backend"
+        },
+        {
+        "type": "chrome",
+        "request": "launch",
+        "name": "Launch Frontend",
+        "url": "http://localhost:4200",
+        "webRoot": "${workspaceFolder}/frontend/src"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Couch Game Backend",
+            "program": "${workspaceFolder}/backend/src/server.ts",
+            "runtimeArgs": ["-r", "ts-node/register"],
+            "env": { "NODE_ENV": "development" },
+            "cwd": "${workspaceFolder}/backend",
+            "outFiles": []
+        }
+    ]
+
+}

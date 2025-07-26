@@ -1,0 +1,31 @@
+# Node.js dependencies
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# IDEs and editors
+.idea/
+.vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Build output
+/dist
+/tmp
+/out-tsc
+
+# Miscellaneous
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
