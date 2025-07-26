@@ -202,7 +202,7 @@ export function createGameServer(): ServerInstance {
         // Convert to frontend format and notify all players
         const frontendRoom = convertGameRoomToFrontendFormat(gameRoom);
         
-        io.to(actualRoomId).emit('gameStarted', frontendRoom);
+        io.to(actualRoomId).emit('gameStarted', { room: frontendRoom });
         io.to(actualRoomId).emit('roomUpdate', frontendRoom);
         
         console.log(`Game started in room ${actualRoomId} with ${gameRoom.players.length} players`);
@@ -235,7 +235,7 @@ export function createGameServer(): ServerInstance {
         // Convert to frontend format and notify all players
         const frontendRoom = convertGameRoomToFrontendFormat(gameRoom);
         
-        io.to(actualRoomId).emit('moveMade', frontendRoom);
+        io.to(actualRoomId).emit('moveMade', { room: frontendRoom });
         io.to(actualRoomId).emit('roomUpdate', frontendRoom);
         
         // Check if game is finished

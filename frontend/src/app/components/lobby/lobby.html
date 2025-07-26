@@ -9,9 +9,6 @@
   @if (!gameState.connected()) {
     <div class="connection-panel card">
       <h2>Connect to Game</h2>
-      @if (gameState.hasStoredIdentity()) {
-        <p class="stored-identity">👤 You have a saved player identity</p>
-      }
       <div class="connection-form">
         <input
           class="input"
