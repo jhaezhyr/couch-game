@@ -50,7 +50,7 @@ export class SocketService {
   public gameEvents$ = this.gameEventSubject.asObservable();
   public connectionStatus$ = this.connectionStatusSubject.asObservable();
 
-  private readonly SERVER_URL = 'http://localhost:3000';
+  private readonly SERVER_URL = 'http://localhost:3010';
 
   connect(): Observable<boolean> {
     return new Observable((observer) => {
