@@ -1,0 +1,52 @@
+name: Deploy Application
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Backend Dependencies
+      working-directory: ./backend
+      run: npm install
+        
+    - name: Build Backend
+      working-directory: ./backend
+      run: npm run build
+        
+    - name: Test Backend
+      working-directory: ./backend
+      run: npm test
+        
+    - name: Install Frontend Dependencies
+      working-directory: ./frontend
+      run: npm install
+        
+    - name: Build Frontend
+      working-directory: ./frontend
+      run: npm run build
+
+    - name: Install SSH Key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: ${{ secrets.KNOWN_HOSTS }}
+        
+    - name: Deploy Backend
+      run: |
+        scp -r backend/dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/www-data/couch-game/backend/
+        
+    - name: Deploy Frontend
+      run: |
+        scp -r frontend/dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/html/couch-game.bbhintze.com/
