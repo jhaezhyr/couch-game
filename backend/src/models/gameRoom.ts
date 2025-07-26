@@ -1,14 +1,14 @@
-import { Player } from './player';
-import { RoomId } from './roomId';
-import { PlayerId } from './playerId';
-import { Name } from './name';
-import { TeamId } from './teamId';
-import { GameRoomSetup } from './gameRoomSetup';
+import { Player } from "./player";
+import { RoomId } from "./roomId";
+import { PlayerId } from "./playerId";
+import { Name } from "./name";
+import { TeamId } from "./teamId";
+import { GameRoomSetup } from "./gameRoomSetup";
 
 export class GameRoom {
   roomId: RoomId;
   players: Player[];
-  state: 'started' | 'finished';
+  state: "started" | "finished";
   teams: { teamA: Player[]; teamB: Player[] };
   seats: Array<PlayerId | null>;
   couchSeats: number[];
@@ -26,7 +26,7 @@ export class GameRoom {
   ) {
     this.roomId = roomId;
     this.players = players;
-    this.state = 'started';
+    this.state = "started";
     this.teams = teams;
     this.seats = seats;
     this.couchSeats = couchSeats;
@@ -42,10 +42,10 @@ export class GameRoom {
     shuffledPlayers.forEach((player, idx) => {
       if (idx % 2 === 0) {
         teamA.push(player);
-        player.team = new TeamId('A');
+        player.team = new TeamId("A");
       } else {
         teamB.push(player);
-        player.team = new TeamId('B');
+        player.team = new TeamId("B");
       }
     });
     const teams = { teamA, teamB };
@@ -65,7 +65,7 @@ export class GameRoom {
     const couchSeats = Array.from({ length: couchSize }, (_, i) => i);
 
     // Secret name assignment
-    const names = shuffledPlayers.map(p => p.name);
+    const names = shuffledPlayers.map((p) => p.name);
     const secretNames = [...names].sort(() => Math.random() - 0.5);
     shuffledPlayers.forEach((player, idx) => {
       player.secretName = secretNames[idx];

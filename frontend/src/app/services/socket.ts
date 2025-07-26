@@ -24,12 +24,23 @@ export interface GameRoom {
 }
 
 interface GameEvent {
-  type: 'playerJoined' | 'playerLeft' | 'seatTaken' | 'teamAssigned' | 'gameStarted' | 'moveMade' | 'gameFinished' | 'nameCalled' | 'emojiChanged' | 'roomUpdate' | 'error';
+  type:
+    | 'playerJoined'
+    | 'playerLeft'
+    | 'seatTaken'
+    | 'teamAssigned'
+    | 'gameStarted'
+    | 'moveMade'
+    | 'gameFinished'
+    | 'nameCalled'
+    | 'emojiChanged'
+    | 'roomUpdate'
+    | 'error';
   data: any;
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SocketService {
   private socket: SocketIOClient | null = null;
@@ -42,7 +53,7 @@ export class SocketService {
   private readonly SERVER_URL = 'http://localhost:3000';
 
   connect(): Observable<boolean> {
-    return new Observable(observer => {
+    return new Observable((observer) => {
       if (this.socket?.connected) {
         observer.next(true);
         observer.complete();
@@ -135,8 +146,16 @@ export class SocketService {
   }
 
   // Game actions
-  joinRoom(roomId: string, playerName: string, persistentPlayerId?: string): void {
-    this.socket?.emit('joinRoom', { roomId, name: playerName, persistentPlayerId });
+  joinRoom(
+    roomId: string,
+    playerName: string,
+    persistentPlayerId?: string
+  ): void {
+    this.socket?.emit('joinRoom', {
+      roomId,
+      name: playerName,
+      persistentPlayerId,
+    });
   }
 
   leaveRoom(): void {

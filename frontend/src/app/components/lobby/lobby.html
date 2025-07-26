@@ -57,14 +57,14 @@
             }
           }
         </div>
-        
+
         <div class="emoji-picker card">
           <h3>Choose Your Avatar</h3>
           <div class="emoji-grid">
             @for (emoji of emojiBank; track emoji) {
-              <button 
+              <button
                 type="button"
-                class="emoji-btn" 
+                class="emoji-btn"
                 [class.selected]="gameState.player()?.emoji === emoji"
                 (click)="setEmoji(emoji)">
                 {{ emoji }}

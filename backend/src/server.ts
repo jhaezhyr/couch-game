@@ -1,4 +1,4 @@
-import { createGameServer } from './createGameServer';
+import { createGameServer } from "./createGameServer";
 
 const { httpServer } = createGameServer();
 

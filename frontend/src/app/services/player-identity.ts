@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import Cookies from 'js-cookie';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class PlayerIdentityService {
   private readonly PLAYER_ID_COOKIE = 'couch-game-player-id';
@@ -11,20 +11,20 @@ export class PlayerIdentityService {
   getOrCreatePlayerId(): string {
     // Try to get existing player ID from cookie
     let playerId = Cookies.get(this.PLAYER_ID_COOKIE);
-    
+
     if (!playerId) {
       // Generate new unique player ID
       playerId = this.generatePlayerId();
       this.setPlayerId(playerId);
     }
-    
+
     return playerId;
   }
 
   setPlayerId(playerId: string): void {
-    Cookies.set(this.PLAYER_ID_COOKIE, playerId, { 
+    Cookies.set(this.PLAYER_ID_COOKIE, playerId, {
       expires: this.COOKIE_EXPIRY_DAYS,
-      sameSite: 'strict'
+      sameSite: 'strict',
     });
   }
 

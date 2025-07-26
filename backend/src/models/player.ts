@@ -1,6 +1,6 @@
-import { PlayerId } from './playerId';
-import { Name } from './name';
-import { TeamId } from './teamId';
+import { PlayerId } from "./playerId";
+import { Name } from "./name";
+import { TeamId } from "./teamId";
 
 export class Player {
   id: PlayerId;

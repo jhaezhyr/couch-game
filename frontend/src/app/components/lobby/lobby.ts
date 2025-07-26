@@ -7,19 +7,54 @@ import { GameStateService } from '../../services/game-state';
   selector: 'app-lobby',
   imports: [CommonModule, FormsModule],
   templateUrl: './lobby.html',
-  styleUrl: './lobby.less'
+  styleUrl: './lobby.less',
 })
 export class Lobby {
   playerName = signal('');
   roomId = signal('');
-  
+
   // Cute emoji bank for player avatars
   readonly emojiBank = [
-    '🐱', '🐶', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
-    '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐥',
-    '🦄', '🐢', '🐙', '🦀', '🐝', '🦋', '🐌', '🐛',
-    '🌸', '🌺', '🌻', '🌼', '🌷', '🌹', '🌟', '⭐',
-    '🍄', '🍓', '🍊', '🍋', '🍒', '🥝', '🍇', '🥥'
+    '🐱',
+    '🐶',
+    '🐭',
+    '🐹',
+    '🐰',
+    '🦊',
+    '🐻',
+    '🐼',
+    '🐨',
+    '🐯',
+    '🦁',
+    '🐮',
+    '🐷',
+    '🐸',
+    '🐵',
+    '🐥',
+    '🦄',
+    '🐢',
+    '🐙',
+    '🦀',
+    '🐝',
+    '🦋',
+    '🐌',
+    '🐛',
+    '🌸',
+    '🌺',
+    '🌻',
+    '🌼',
+    '🌷',
+    '🌹',
+    '🌟',
+    '⭐',
+    '🍄',
+    '🍓',
+    '🍊',
+    '🍋',
+    '🍒',
+    '🥝',
+    '🍇',
+    '🥥',
   ];
 
   constructor(public gameState: GameStateService) {}
@@ -58,7 +93,10 @@ export class Lobby {
   // Helper methods for template
   isCurrentPlayerSeat(seatIndex: number): boolean {
     const room = this.gameState.room();
-    return room?.currentPlayerIndex === seatIndex && this.gameState.gamePhase() === 'playing';
+    return (
+      room?.currentPlayerIndex === seatIndex &&
+      this.gameState.gamePhase() === 'playing'
+    );
   }
 
   getPlayerTeam(playerId: string | undefined): 'A' | 'B' | null {
@@ -70,7 +108,7 @@ export class Lobby {
     const room = this.gameState.room();
     if (!room) return '';
 
-    const player = room.seats.find(seat => seat?.id === playerId);
+    const player = room.seats.find((seat) => seat?.id === playerId);
     return player?.name || 'Unknown';
   }
 
@@ -78,7 +116,7 @@ export class Lobby {
     const room = this.gameState.room();
     if (!room) return null;
 
-    const player = room.seats.find(seat => seat?.id === playerId);
+    const player = room.seats.find((seat) => seat?.id === playerId);
     return player?.emoji || null;
   }
 
@@ -101,7 +139,7 @@ export class Lobby {
     const player = this.gameState.player();
     if (!room || !player || !room.secretNames) return '';
 
-    const secretInfo = room.secretNames.find(s => s.playerId === player.id);
+    const secretInfo = room.secretNames.find((s) => s.playerId === player.id);
     return secretInfo?.secretName || '';
   }
 
@@ -109,7 +147,7 @@ export class Lobby {
     const room = this.gameState.room();
     if (!room || !room.secretNames) return [];
 
-    return room.secretNames.map(s => s.secretName).filter(name => name);
+    return room.secretNames.map((s) => s.secretName).filter((name) => name);
   }
 
   callName(name: string): void {
@@ -120,7 +158,10 @@ export class Lobby {
     this.gameState.setPlayerEmoji(emoji);
   }
 
-  getCircularPosition(seatIndex: number, totalSeats: number): { x: string; y: string } {
+  getCircularPosition(
+    seatIndex: number,
+    totalSeats: number
+  ): { x: string; y: string } {
     if (totalSeats === 0) return { x: '50%', y: '50%' };
 
     // Calculate angle for this seat (starting from top, going clockwise)
@@ -135,7 +176,7 @@ export class Lobby {
 
     return {
       x: `${x}%`,
-      y: `${y}%`
+      y: `${y}%`,
     };
   }
 }

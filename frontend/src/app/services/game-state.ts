@@ -3,7 +3,7 @@ import { GameRoom, Player, SocketService } from './socket';
 import { PlayerIdentityService } from './player-identity';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class GameStateService {
   // Signals for reactive state management
@@ -19,8 +19,12 @@ export class GameStateService {
   public readonly error = computed(() => this.errorMessage());
 
   // Game state computed properties
-  public readonly gamePhase = computed(() => this.currentRoom()?.gamePhase ?? 'waiting');
-  public readonly currentPlayerIndex = computed(() => this.currentRoom()?.currentPlayerIndex ?? -1);
+  public readonly gamePhase = computed(
+    () => this.currentRoom()?.gamePhase ?? 'waiting'
+  );
+  public readonly currentPlayerIndex = computed(
+    () => this.currentRoom()?.currentPlayerIndex ?? -1
+  );
   public readonly isCurrentPlayer = computed(() => {
     const room = this.currentRoom();
     const player = this.currentPlayer();
@@ -45,14 +49,19 @@ export class GameStateService {
     if (!room) return false;
 
     // Check if we have enough players (minimum 6)
-    const totalPlayers = room.seats.filter(seat => seat !== null).length;
+    const totalPlayers = room.seats.filter((seat) => seat !== null).length;
     const hasEnoughPlayers = totalPlayers >= 6;
 
     // Check if teams are balanced (at least 3 per team for 6+ players)
     const teamASizeOk = room.teams.A.length >= 3;
     const teamBSizeOk = room.teams.B.length >= 3;
 
-    return hasEnoughPlayers && teamASizeOk && teamBSizeOk && room.gamePhase === 'setup';
+    return (
+      hasEnoughPlayers &&
+      teamASizeOk &&
+      teamBSizeOk &&
+      room.gamePhase === 'setup'
+    );
   });
 
   constructor(
@@ -64,7 +73,7 @@ export class GameStateService {
 
   private initializeSubscriptions(): void {
     // Listen to connection status
-    this.socketService.connectionStatus$.subscribe(status => {
+    this.socketService.connectionStatus$.subscribe((status) => {
       this.isConnected.set(status);
       if (!status) {
         this.clearError();
@@ -72,7 +81,7 @@ export class GameStateService {
     });
 
     // Listen to game events
-    this.socketService.gameEvents$.subscribe(event => {
+    this.socketService.gameEvents$.subscribe((event) => {
       this.handleGameEvent(event);
     });
   }
@@ -84,12 +93,12 @@ export class GameStateService {
         // Update currentPlayer if this matches our persistent ID
         const localPlayer = this.currentPlayer();
         const persistentId = this.playerIdentityService.getOrCreatePlayerId();
-        
+
         if (event.data.player && event.data.player.id === persistentId) {
           // This is our player data from the server, update our local state
           this.currentPlayer.set({
             ...event.data.player,
-            id: persistentId // Ensure we keep our persistent ID
+            id: persistentId, // Ensure we keep our persistent ID
           });
         }
         break;
@@ -120,7 +129,9 @@ export class GameStateService {
 
       case 'nameCalled':
         // Show feedback when a name is called
-        this.setError(`${event.data.callerName} called "${event.data.calledName}"`);
+        this.setError(
+          `${event.data.callerName} called "${event.data.calledName}"`
+        );
         break;
 
       case 'emojiChanged':
@@ -155,12 +166,12 @@ export class GameStateService {
   joinRoom(roomId: string, playerName: string): void {
     // Get or create persistent player ID
     const persistentPlayerId = this.playerIdentityService.getOrCreatePlayerId();
-    
+
     this.currentPlayer.set({
       id: persistentPlayerId, // Use persistent ID
       name: playerName,
       emoji: null,
-      isReady: false
+      isReady: false,
     });
     this.socketService.joinRoom(roomId, playerName, persistentPlayerId);
   }
@@ -250,7 +261,7 @@ export class GameStateService {
     if (!this.isCurrentPlayer()) return false;
 
     // Check if the name is a valid secret name
-    return room.secretNames?.some(sn => sn.secretName === name) ?? false;
+    return room.secretNames?.some((sn) => sn.secretName === name) ?? false;
   }
 
   // Utility methods

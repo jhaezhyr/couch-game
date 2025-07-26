@@ -5,7 +5,7 @@ import { Lobby } from './components/lobby/lobby';
   selector: 'app-root',
   imports: [Lobby],
   templateUrl: './app.html',
-  styleUrl: './app.less'
+  styleUrl: './app.less',
 })
 export class App {
   protected readonly title = signal('Couch Game');

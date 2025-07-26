@@ -49,7 +49,7 @@ button {
     margin-bottom: 20px;
     color: @primary-text;
   }
-  
+
   .stored-identity {
     background: fade(@glow-success, 15%);
     color: @glow-success;
@@ -153,21 +153,21 @@ button {
     align-items: center;
     justify-content: center;
     height: 100%;
-    
+
     .seat-emoji {
       font-size: 24px;
       margin-bottom: 2px;
-      
+
       @media (max-width: 768px) {
         font-size: 20px;
       }
-      
+
       @media (max-width: 480px) {
         font-size: 16px;
         margin-bottom: 1px;
       }
     }
-    
+
     .seat-name {
       font-size: 10px;
       font-weight: bold;
@@ -176,7 +176,7 @@ button {
       text-overflow: ellipsis;
       white-space: nowrap;
       max-width: 100%;
-      
+
       @media (max-width: 480px) {
         font-size: 8px;
       }
@@ -279,12 +279,12 @@ button {
     display: flex;
     align-items: center;
     gap: 8px;
-    
+
     .team-member-emoji {
       font-size: 18px;
       flex-shrink: 0;
     }
-    
+
     .team-member-name {
       flex: 1;
       text-align: left;
@@ -301,29 +301,29 @@ button {
 
 .emoji-picker {
   text-align: center;
-  
+
   h3 {
     margin-bottom: 20px;
     color: @glow-primary;
   }
-  
+
   .emoji-grid {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     gap: 10px;
     margin: 20px auto;
     max-width: 400px;
-    
+
     @media (max-width: 768px) {
       grid-template-columns: repeat(6, 1fr);
     }
-    
+
     @media (max-width: 480px) {
       grid-template-columns: repeat(5, 1fr);
       gap: 6px;
     }
   }
-  
+
   .emoji-btn {
     background: @secondary-bg;
     border: 2px solid @accent-bg;
@@ -336,25 +336,25 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
     @media (max-width: 480px) {
       font-size: 20px;
       padding: 6px;
     }
-    
+
     &:hover {
       background: fade(@glow-primary, 20%);
       border-color: @glow-primary;
       transform: scale(1.1);
     }
-    
+
     &.selected {
       background: fade(@glow-success, 30%);
       border-color: @glow-success;
       .glow(@glow-success, 1);
     }
   }
-  
+
   .current-emoji {
     color: @secondary-text;
     font-size: 1.1rem;
