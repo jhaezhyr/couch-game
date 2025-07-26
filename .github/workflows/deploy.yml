@@ -35,7 +35,7 @@ jobs:
         
     - name: Build Frontend
       working-directory: ./frontend
-      run: npm run build
+      run: npm run build -- --prod
 
     - name: Install SSH Key
       uses: shimataro/ssh-key-action@v2
@@ -43,10 +43,13 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         known_hosts: ${{ secrets.KNOWN_HOSTS }}
         
-    - name: Deploy Backend
+    - name: Deploy Backend and Restart
       run: |
+        # Deploy backend files
         scp -r backend/dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/couch-game/backend/
+        # Restart using PM2
+        ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "cd /var/www/couch-game/backend && pm2 restart couch-game-server || pm2 start dist/server.js --name couch-game-server"
         
     - name: Deploy Frontend
       run: |
-        scp -r frontend/dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/html/couch-game.bbhintze.com/
+        scp -r frontend/dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/couch-game.bbhintze.com/

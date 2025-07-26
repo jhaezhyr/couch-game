@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { io, Socket as SocketIOClient } from 'socket.io-client';
 import { Observable, Subject } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 // Types from backend
 export interface Player {
@@ -50,7 +51,7 @@ export class SocketService {
   public gameEvents$ = this.gameEventSubject.asObservable();
   public connectionStatus$ = this.connectionStatusSubject.asObservable();
 
-  private readonly SERVER_URL = 'http://localhost:3010';
+  private readonly SERVER_URL = environment.serverUrl;
 
   connect(): Observable<boolean> {
     return new Observable((observer) => {

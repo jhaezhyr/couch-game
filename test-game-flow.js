@@ -6,7 +6,7 @@ const testGameFlow = async () => {
   
   // Test connection to backend
   try {
-    const response = await fetch('http://localhost:3000');
+    const response = await fetch('http://localhost:3010');
     const text = await response.text();
     console.log('Backend response:', text);
   } catch (error) {
@@ -14,7 +14,7 @@ const testGameFlow = async () => {
   }
   
   // Test WebSocket connection manually
-  const socket = io('http://localhost:3000');
+  const socket = io('http://localhost:3010');
   
   socket.on('connect', () => {
     console.log('✅ Connected to backend');
