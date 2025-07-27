@@ -53,4 +53,4 @@ jobs:
         
     - name: Deploy Frontend
       run: |
-        scp -r frontend/dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/couch-game.bbhintze.com/
+        scp -r frontend/dist/frontend-app/browser/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/couch-game.bbhintze.com/
