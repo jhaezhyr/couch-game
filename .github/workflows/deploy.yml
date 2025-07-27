@@ -46,10 +46,10 @@ jobs:
     - name: Deploy Backend and Restart
       run: |
         # Deploy backend files
-        scp -r backend/dist/* ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/couch-game/backend/
-        # Restart using PM2
-
-        ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "cd /var/www/couch-game/backend && pm2 restart couch-game-server || pm2 start server.js --name couch-game-server"
+        scp -r backend/{dist,package.json,package-lock.json} ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/couch-game/backend/
+        
+        # Install dependencies and restart
+        ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "cd /var/www/couch-game/backend && npm ci && pm2 restart couch-game-server || pm2 start server.js --name couch-game-server"
         
     - name: Deploy Frontend
       run: |
