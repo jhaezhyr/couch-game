@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  serverDomain: 'http://couch-game.bbhintze.com/',
+  serverDomain: 'https://couch-game.bbhintze.com/',
   serverPathPrefix: '/api',
 };
