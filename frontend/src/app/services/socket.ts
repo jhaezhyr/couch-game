@@ -51,7 +51,8 @@ export class SocketService {
   public gameEvents$ = this.gameEventSubject.asObservable();
   public connectionStatus$ = this.connectionStatusSubject.asObservable();
 
-  private readonly SERVER_URL = environment.serverUrl;
+  private readonly SERVER_DOMAIN = environment.serverDomain;
+  private readonly SERVER_PATH_PREFIX = environment.serverPathPrefix;
 
   connect(): Observable<boolean> {
     return new Observable((observer) => {
@@ -61,7 +62,9 @@ export class SocketService {
         return;
       }
 
-      this.socket = io(this.SERVER_URL);
+      this.socket = io(this.SERVER_DOMAIN, {
+        path: this.SERVER_PATH_PREFIX + '/socket.io',
+      });
 
       this.socket.on('connect', () => {
         console.log('Connected to server');
