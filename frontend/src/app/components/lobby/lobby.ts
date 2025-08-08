@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GameStateService } from '../../services/game-state';
+import { ToastService } from '../../services/toast';
 
 @Component({
   selector: 'app-lobby',
@@ -12,6 +13,11 @@ import { GameStateService } from '../../services/game-state';
 export class Lobby {
   playerName = signal('');
   roomId = signal('');
+
+  // Expose toasts for template via a getter to avoid init order errors
+  get toasts() {
+    return this.toast.toasts;
+  }
 
   // Cute emoji bank for player avatars
   readonly emojiBank = [
@@ -57,7 +63,10 @@ export class Lobby {
     '🥥',
   ];
 
-  constructor(public gameState: GameStateService) {}
+  constructor(
+    public gameState: GameStateService,
+    private toast: ToastService
+  ) {}
 
   async connect(): Promise<void> {
     if (!this.playerName().trim()) return;
@@ -178,5 +187,16 @@ export class Lobby {
       x: `${x}%`,
       y: `${y}%`,
     };
+  }
+
+  // Helper methods for recent calls display
+  getDisplayedRecentCalls() {
+    const allCalls = this.gameState.recentCalls();
+    return allCalls.slice(-3); // Show only last 3 calls
+  }
+
+  getHiddenCallsCount(): number {
+    const allCalls = this.gameState.recentCalls();
+    return Math.max(0, allCalls.length - 3);
   }
 }

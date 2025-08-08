@@ -1,4 +1,15 @@
 <div class="lobby-container">
+  <!-- Toast container -->
+  @if (toasts().length) {
+    <div class="toast-container">
+      @for (t of toasts(); track t.id) {
+        <div class="toast" [class]="'toast ' + t.type" [attr.data-toast-id]="t.id">
+          {{ t.message }}
+        </div>
+      }
+    </div>
+  }
+
   <div class="lobby-header">
     <h1>Couch Game Lobby</h1>
     @if (gameState.error()) {
@@ -44,7 +55,7 @@
     </div>
   } @else {
     <div class="game-room">
-
+      
 
       @if (gameState.gamePhase() === 'setup') {
         <div class="room-info card">
@@ -104,38 +115,69 @@
         </div>
       }
 
-      <div class="couch-area">
-        <div class="flow-indicator">Players move clockwise around the circle</div>
-        <div class="couch">
-          <div class="seats-grid">
-            @for (seat of gameState.room()?.seats; track $index) {
-              <button
-                type="button"
-                class="seat circular-seat"
-                [class.occupied]="seat !== null"
-                [class.current-player]="isCurrentPlayerSeat($index)"
-                [class.team-a]="getPlayerTeam(seat?.id) === 'A'"
-                [class.team-b]="getPlayerTeam(seat?.id) === 'B'"
-                [class.my-seat]="seat?.id === gameState.player()?.id"
-                [class.couch-seat]="isCouchSeat($index)"
-                [style.left]="getCircularPosition($index, gameState.room()?.seats?.length || 0).x"
-                [style.top]="getCircularPosition($index, gameState.room()?.seats?.length || 0).y"
-                (click)="takeSeat($index)"
-                [attr.aria-label]="seat ? 'Seat for ' + seat.name : 'Empty seat'"
-              >
-                @if (seat) {
-                  <div class="seat-content">
-                    @if (seat.emoji) {
-                      <span class="seat-emoji">{{ seat.emoji }}</span>
-                    }
-                    <span class="seat-name">{{ seat.name }}</span>
-                  </div>
-                } @else {
-                  <span class="seat-placeholder">+</span>
-                }
-              </button>
-            }
+      <!-- Game layout with responsive design -->
+      <div class="game-layout">
+        <!-- Playing field -->
+        <div class="couch-area">
+          <div class="flow-indicator">Players move clockwise around the circle</div>
+          <div class="couch">
+            <div class="seats-grid">
+              @for (seat of gameState.room()?.seats; track $index) {
+                <button
+                  type="button"
+                  class="seat circular-seat"
+                  [class.occupied]="seat !== null"
+                  [class.current-player]="isCurrentPlayerSeat($index)"
+                  [class.team-a]="getPlayerTeam(seat?.id) === 'A'"
+                  [class.team-b]="getPlayerTeam(seat?.id) === 'B'"
+                  [class.my-seat]="seat?.id === gameState.player()?.id"
+                  [class.couch-seat]="isCouchSeat($index)"
+                  [style.left]="getCircularPosition($index, gameState.room()?.seats?.length || 0).x"
+                  [style.top]="getCircularPosition($index, gameState.room()?.seats?.length || 0).y"
+                  (click)="takeSeat($index)"
+                  [attr.aria-label]="seat ? 'Seat for ' + seat.name : 'Empty seat'"
+                >
+                  @if (seat) {
+                    <div class="seat-content">
+                      @if (seat.emoji) {
+                        <span class="seat-emoji">{{ seat.emoji }}</span>
+                      }
+                      <span class="seat-name">{{ seat.name }}</span>
+                    </div>
+                  } @else {
+                    <span class="seat-placeholder">+</span>
+                  }
+                </button>
+              }
+            </div>
           </div>
+        </div>
+
+        <!-- Recent calls sidebar -->
+        <div class="game-info-panel">
+          
+          @if (gameState.recentCalls().length) {
+            <div class="call-history card">
+              <h3>Recent calls</h3>
+              <ul class="call-list">
+                @for (c of getDisplayedRecentCalls(); track c.at) {
+                  <li>
+                    <span class="caller">{{ c.callerName }}</span>
+                    <span class="verb"> called </span>
+                    <span class="called">"{{ c.calledName }}"</span>
+                    @if (c.movedPlayerName) {
+                      <div class="move-result">→ {{ c.movedPlayerName }} moved to the empty seat</div>
+                    }
+                  </li>
+                }
+              </ul>
+              @if (getHiddenCallsCount() > 0) {
+                <div class="more-calls-indicator">
+                  ... and {{ getHiddenCallsCount() }} more calls before
+                </div>
+              }
+            </div>
+          }
         </div>
       </div>
 

@@ -103,12 +103,29 @@ button {
   }
 }
 
+.game-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  
+  @media (min-width: 1024px) {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 40px;
+  }
+}
+
 .couch-area {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 30px 0;
+  flex: 1;
+  margin: 0;
+
+  @media (min-width: 1024px) {
+    margin: 30px 0;
+  }
 
   .flow-indicator {
     margin-bottom: 20px;
@@ -122,6 +139,18 @@ button {
       margin-right: 8px;
       color: @glow-primary;
     }
+  }
+}
+
+.game-info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  
+  @media (min-width: 1024px) {
+    min-width: 300px;
+    max-width: 350px;
+    flex-shrink: 0;
   }
 }
 
@@ -393,6 +422,73 @@ button {
   margin-top: 30px;
 }
 
+
+.call-history {
+  h3 {
+    margin-bottom: 15px;
+    color: @glow-primary;
+    font-size: 1.2rem;
+    text-align: center;
+  }
+}
+
+.call-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  
+  @media (min-width: 1024px) {
+    max-height: 300px;
+  }
+}
+
+.call-list li {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: @secondary-bg;
+  border: 1px solid @accent-bg;
+  border-radius: 6px;
+  font-size: 14px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.call-list .caller {
+  font-weight: 600;
+  color: @glow-primary;
+}
+
+.call-list .called {
+  font-style: italic;
+  color: @glow-success;
+}
+
+.call-list .verb {
+  color: @secondary-text;
+}
+
+.move-result {
+  font-size: 12px;
+  color: @glow-warning;
+  font-weight: 500;
+  margin-top: 4px;
+  padding-left: 16px;
+}
+
+.more-calls-indicator {
+  text-align: center;
+  font-style: italic;
+  color: @muted-text;
+  font-size: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid @accent-bg;
+}
+
 // Pulse animation classes for buttons
 .pulse-success {
   animation: pulse-success 2s infinite ease-in-out;
@@ -408,4 +504,89 @@ button {
 
 .pulse-error {
   animation: pulse-error 2s infinite ease-in-out;
+}
+
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 1000;
+  pointer-events: none;
+  
+  @media (max-width: 768px) {
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+  }
+}
+
+.toast {
+  background: rgba(34, 34, 34, 0.95);
+  color: #fff;
+  padding: 16px 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 350px;
+  word-wrap: break-word;
+  transform: translateX(100px);
+  opacity: 0;
+  animation: toast-slide-in 0.3s ease-out forwards;
+  pointer-events: auto;
+  
+  &.dismissing {
+    animation: toast-slide-out 0.3s ease-in forwards;
+  }
+  
+  @media (max-width: 480px) {
+    max-width: calc(100vw - 40px);
+    font-size: 13px;
+    padding: 14px 16px;
+  }
+}
+
+.toast.info { 
+  background: rgba(31, 41, 55, 0.95);
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.1), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.toast.success { 
+  background: rgba(6, 95, 70, 0.95);
+  border-color: rgba(34, 197, 94, 0.3);
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.1), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.toast.error { 
+  background: rgba(127, 29, 29, 0.95);
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 8px 32px rgba(239, 68, 68, 0.1), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes toast-slide-in {
+  0% {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-slide-out {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100px);
+    opacity: 0;
+  }
 }

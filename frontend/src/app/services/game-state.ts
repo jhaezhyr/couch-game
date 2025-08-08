@@ -1,6 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { GameRoom, Player, SocketService } from './socket';
 import { PlayerIdentityService } from './player-identity';
+import { ToastService } from './toast';
 
 @Injectable({
   providedIn: 'root',
@@ -12,11 +13,26 @@ export class GameStateService {
   private isConnected = signal<boolean>(false);
   private errorMessage = signal<string | null>(null);
 
+  // Add a persistent call history so players can see what was called
+  private callHistory = signal<Array<{ 
+    callerName: string; 
+    calledName: string; 
+    movedPlayerName?: string; 
+    at: number;
+  }>>([]);
+
   // Computed signals
   public readonly room = computed(() => this.currentRoom());
   public readonly player = computed(() => this.currentPlayer());
   public readonly connected = computed(() => this.isConnected());
   public readonly error = computed(() => this.errorMessage());
+
+  // Expose recent calls and last call for the UI
+  public readonly recentCalls = computed(() => this.callHistory());
+  public readonly lastCall = computed(() => {
+    const arr = this.callHistory();
+    return arr.length ? arr[arr.length - 1] : null;
+  });
 
   // Game state computed properties
   public readonly gamePhase = computed(
@@ -66,7 +82,8 @@ export class GameStateService {
 
   constructor(
     private socketService: SocketService,
-    private playerIdentityService: PlayerIdentityService
+    private playerIdentityService: PlayerIdentityService,
+    private toast: ToastService
   ) {
     this.initializeSubscriptions();
   }
@@ -117,6 +134,8 @@ export class GameStateService {
 
       case 'gameStarted':
         this.updateRoom(event.data.room);
+        // New game: clear any previous call history
+        this.callHistory.set([]);
         break;
 
       case 'moveMade':
@@ -128,10 +147,19 @@ export class GameStateService {
         break;
 
       case 'nameCalled':
-        // Show feedback when a name is called
-        this.setError(
-          `${event.data.callerName} called "${event.data.calledName}"`
-        );
+        // Record the call persistently for deduction
+        this.callHistory.update((arr) => [
+          ...arr,
+          {
+            callerName: event.data.callerName,
+            calledName: event.data.calledName,
+            movedPlayerName: event.data.movedPlayerName,
+            at: Date.now(),
+          },
+        ]);
+        // Pretty toast notification instead of error banner
+        const moveResult = event.data.movedPlayerName ? ` - ${event.data.movedPlayerName} moved to the empty seat` : '';
+        this.toast.show(`${event.data.callerName} called "${event.data.calledName}"${moveResult}`, 'info', 4000);
         break;
 
       case 'emojiChanged':
@@ -180,6 +208,8 @@ export class GameStateService {
     this.socketService.leaveRoom();
     this.currentRoom.set(null);
     this.currentPlayer.set(null);
+    // Clear history when leaving a room
+    this.callHistory.set([]);
   }
 
   takeSeat(seatIndex: number): void {
@@ -294,5 +324,7 @@ export class GameStateService {
     this.currentRoom.set(null);
     this.currentPlayer.set(null);
     this.isConnected.set(false);
+    // Clear history when disconnecting
+    this.callHistory.set([]);
   }
 }
