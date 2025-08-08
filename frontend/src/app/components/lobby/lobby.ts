@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GameStateService } from '../../services/game-state';
@@ -66,11 +66,20 @@ export class Lobby {
   constructor(
     public gameState: GameStateService,
     private toast: ToastService
-  ) {}
+  ) {
+    // Auto-populate name field when player joins a room
+    effect(() => {
+      const player = this.gameState.player();
+      if (player && player.name && !this.playerName()) {
+        this.playerName.set(player.name);
+      }
+    });
+    
+    // Auto-connect on component init
+    this.connect();
+  }
 
   async connect(): Promise<void> {
-    if (!this.playerName().trim()) return;
-
     const connected = await this.gameState.connectToServer();
     if (!connected) {
       console.error('Failed to connect to server');
@@ -78,13 +87,18 @@ export class Lobby {
   }
 
   joinRoom(): void {
-    const name = this.playerName().trim();
     const room = this.roomId().trim();
+    // Join room without a name initially - name will be set during setup
+    this.gameState.joinRoom(room || 'new');
+  }
 
+  updatePlayerName(): void {
+    const name = this.playerName().trim();
     if (!name) return;
-
-    // If no room ID provided, server will create a new room
-    this.gameState.joinRoom(room || 'new', name);
+    this.gameState.setPlayerName(name);
+    // Clear the input briefly to show it was updated
+    this.playerName.set('');
+    setTimeout(() => this.playerName.set(name), 100);
   }
 
   leaveRoom(): void {
@@ -96,7 +110,9 @@ export class Lobby {
   }
 
   startGame(): void {
-    this.gameState.startGame();
+    if (this.canStartGame()) {
+      this.gameState.startGame();
+    }
   }
 
   // Helper methods for template
@@ -198,5 +214,69 @@ export class Lobby {
   getHiddenCallsCount(): number {
     const allCalls = this.gameState.recentCalls();
     return Math.max(0, allCalls.length - 3);
+  }
+
+  // Game start validation helpers
+  canStartGame(): boolean {
+    const room = this.gameState.room();
+    if (!room) return false;
+
+    // Check if we have enough players (minimum 6)
+    const totalPlayers = room.seats.filter((seat) => seat !== null).length;
+    const hasEnoughPlayers = totalPlayers >= 6;
+
+    // Check if teams are balanced (at least 3 per team for 6+ players)
+    const teamASizeOk = room.teams.A.length >= 3;
+    const teamBSizeOk = room.teams.B.length >= 3;
+
+    // Check if all players have names and avatars
+    const allPlayersReady = room.seats.every(seat => 
+      seat === null || (seat.name && seat.name.trim() && seat.emoji)
+    );
+
+    return (
+      hasEnoughPlayers &&
+      teamASizeOk &&
+      teamBSizeOk &&
+      allPlayersReady &&
+      room.gamePhase === 'setup'
+    );
+  }
+
+  getGameStartBlockerMessage(): string {
+    const room = this.gameState.room();
+    if (!room) return 'No room found';
+
+    const totalPlayers = room.seats.filter((seat) => seat !== null).length;
+    const teamASizeOk = room.teams.A.length >= 3;
+    const teamBSizeOk = room.teams.B.length >= 3;
+
+    // Check for missing names or avatars
+    const playersWithoutNames = room.seats.filter(seat => 
+      seat !== null && (!seat.name || !seat.name.trim())
+    );
+    const playersWithoutAvatars = room.seats.filter(seat => 
+      seat !== null && !seat.emoji
+    );
+
+    if (playersWithoutNames.length > 0) {
+      const playerNames = playersWithoutNames.map(p => p?.name || 'Player without name').join(', ');
+      return `Waiting for players to set their names: ${playerNames}`;
+    }
+
+    if (playersWithoutAvatars.length > 0) {
+      const playerNames = playersWithoutAvatars.map(p => p?.name || 'Player without avatar').join(', ');
+      return `Waiting for players to choose avatars: ${playerNames}`;
+    }
+
+    if (totalPlayers < 6) {
+      return `Need at least 6 players to start (currently ${totalPlayers})`;
+    }
+
+    if (!teamASizeOk || !teamBSizeOk) {
+      return `Teams need to be balanced (at least 3 players each). Team A: ${room.teams.A.length}, Team B: ${room.teams.B.length}`;
+    }
+
+    return 'All requirements met!';
   }
 }

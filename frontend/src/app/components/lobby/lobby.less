@@ -61,6 +61,21 @@ button {
   }
 }
 
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid @accent-bg;
+  border-top: 4px solid @glow-primary;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .connection-form, .room-form {
   display: flex;
   flex-direction: column;
@@ -322,35 +337,84 @@ button {
 
   .setup-instructions {
     text-align: center;
-    color: @muted-text;
     margin-top: 20px;
-    font-style: italic;
+
+    .blocker-message {
+      color: @glow-warning;
+      font-weight: 500;
+      padding: 12px 16px;
+      background: fade(@glow-warning, 10%);
+      border: 1px solid fade(@glow-warning, 30%);
+      border-radius: 8px;
+      margin: 0;
+    }
   }
 }
 
-.emoji-picker {
+.player-setup {
   text-align: center;
 
   h3 {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     color: @glow-primary;
+  }
+
+  .setup-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    
+    @media (min-width: 768px) {
+      flex-direction: row;
+      gap: 40px;
+      align-items: flex-start;
+    }
+  }
+
+  .name-section, .avatar-section {
+    flex: 1;
+    
+    h4 {
+      margin-bottom: 15px;
+      color: @secondary-text;
+      font-size: 1rem;
+    }
+  }
+
+  .identity-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .input {
+      font-size: 1rem;
+      padding: 12px;
+    }
+
+    .btn {
+      font-size: 0.95rem;
+      padding: 12px 20px;
+    }
   }
 
   .emoji-grid {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 10px;
     margin: 20px auto;
     max-width: 400px;
 
-    @media (max-width: 768px) {
-      grid-template-columns: repeat(6, 1fr);
-    }
-
     @media (max-width: 480px) {
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 6px;
+      max-width: 200px;
     }
+  }
+
+  .current-emoji {
+    color: @secondary-text;
+    font-size: 0.9rem;
+    margin: 10px 0 0 0;
   }
 
   .emoji-btn {

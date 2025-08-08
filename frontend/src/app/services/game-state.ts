@@ -166,6 +166,15 @@ export class GameStateService {
         this.updateRoom(event.data.room);
         break;
 
+      case 'playerNameChanged':
+        this.updateRoom(event.data.room);
+        // Update local player data if this is our player
+        const currentPlayer = this.currentPlayer();
+        if (currentPlayer && event.data.playerId === currentPlayer.id) {
+          this.currentPlayer.set({ ...currentPlayer, name: event.data.name });
+        }
+        break;
+
       case 'roomUpdate':
         this.updateRoom(event.data);
         break;
@@ -191,17 +200,27 @@ export class GameStateService {
     }
   }
 
-  joinRoom(roomId: string, playerName: string): void {
-    // Get or create persistent player ID
-    const persistentPlayerId = this.playerIdentityService.getOrCreatePlayerId();
+  joinRoom(roomId: string): void {
+    // Get or create persistent session ID (allows multiple game identities)
+    const sessionId = this.playerIdentityService.getOrCreatePlayerId();
 
+    // Create a temporary player with no name initially
     this.currentPlayer.set({
-      id: persistentPlayerId, // Use persistent ID
-      name: playerName,
+      id: sessionId,
+      name: '', // Will be set during setup
       emoji: null,
       isReady: false,
     });
-    this.socketService.joinRoom(roomId, playerName, persistentPlayerId);
+    this.socketService.joinRoom(roomId, '', sessionId); // Join with empty name initially
+  }
+
+  setPlayerName(name: string): void {
+    const currentPlayer = this.currentPlayer();
+    if (currentPlayer) {
+      const updatedPlayer = { ...currentPlayer, name };
+      this.currentPlayer.set(updatedPlayer);
+      this.socketService.setPlayerName(name);
+    }
   }
 
   leaveRoom(): void {

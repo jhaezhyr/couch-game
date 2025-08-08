@@ -336,6 +336,29 @@ export function createGameServer(): ServerInstance {
       io.to(playerInfo.roomId).emit("emojiChanged", { room: frontendRoom });
     });
 
+    socket.on("setPlayerName", ({ name }) => {
+      const playerInfo = socketPlayers[socket.id];
+      if (!playerInfo) return;
+
+      const setup = gameRoomSetups[playerInfo.roomId];
+      if (!setup) return;
+
+      // Find player and set name
+      const player = setup.players.find(
+        (p) => p.id.value === playerInfo.playerId
+      );
+      if (!player) return;
+
+      player.name = new Name(name);
+
+      const frontendRoom = convertSetupToFrontendFormat(setup);
+      io.to(playerInfo.roomId).emit("playerNameChanged", { 
+        room: frontendRoom,
+        playerId: playerInfo.playerId,
+        name: name 
+      });
+    });
+
     socket.on("callName", ({ name }) => {
       const playerInfo = socketPlayers[socket.id];
       if (!playerInfo) return;

@@ -19,18 +19,9 @@
 
   @if (!gameState.connected()) {
     <div class="connection-panel card">
-      <h2>Connect to Game</h2>
+      <h2>Connecting to Server...</h2>
       <div class="connection-form">
-        <input
-          class="input"
-          [value]="playerName()"
-          (input)="playerName.set($any($event.target).value)"
-          placeholder="Enter your name"
-          (keyup.enter)="connect()"
-        />
-        <button class="btn primary" (click)="connect()" [disabled]="!playerName().trim()">
-          Connect
-        </button>
+        <div class="loading-spinner"></div>
       </div>
     </div>
   } @else if (!gameState.room()) {
@@ -69,24 +60,51 @@
           }
         </div>
 
-        <div class="emoji-picker card">
-          <h3>Choose Your Avatar</h3>
-          <div class="emoji-grid">
-            @for (emoji of emojiBank; track emoji) {
-              <button
-                type="button"
-                class="emoji-btn"
-                [class.selected]="gameState.player()?.emoji === emoji"
-                (click)="setEmoji(emoji)">
-                {{ emoji }}
-              </button>
-            }
+        <div class="player-setup card">
+          <h3>Set Your Identity</h3>
+          
+          <div class="setup-sections">
+            <!-- Name section -->
+            <div class="name-section">
+              <h4>Your Name</h4>
+              <div class="identity-form">
+                <input
+                  class="input"
+                  [value]="playerName()"
+                  (input)="playerName.set($any($event.target).value)"
+                  placeholder="Enter your name for this game"
+                  (keyup.enter)="updatePlayerName()"
+                />
+                <button 
+                  class="btn primary" 
+                  (click)="updatePlayerName()" 
+                  [disabled]="!playerName().trim() || playerName().trim() === gameState.player()?.name">
+                  Update Name
+                </button>
+              </div>
+            </div>
+
+            <!-- Avatar section -->
+            <div class="avatar-section">
+              <h4>Your Avatar</h4>
+              <div class="emoji-grid">
+                @for (emoji of emojiBank; track emoji) {
+                  <button
+                    type="button"
+                    class="emoji-btn"
+                    [class.selected]="gameState.player()?.emoji === emoji"
+                    (click)="setEmoji(emoji)">
+                    {{ emoji }}
+                  </button>
+                }
+              </div>
+              @if (gameState.player()?.emoji) {
+                <p class="current-emoji">Selected: {{ gameState.player()?.emoji }}</p>
+              } @else {
+                <p class="current-emoji">Select an emoji above</p>
+              }
+            </div>
           </div>
-          @if (gameState.player()?.emoji) {
-            <p class="current-emoji">Your avatar: {{ gameState.player()?.emoji }}</p>
-          } @else {
-            <p class="current-emoji">Select an emoji above</p>
-          }
         </div>
       }
 
@@ -238,14 +256,14 @@
             </div>
           </div>
 
-          @if (gameState.canStartGame()) {
+          @if (canStartGame()) {
             <button class="btn success pulse-success" (click)="startGame()">
               Start Game!
             </button>
           } @else {
-            <p class="setup-instructions">
-              Make sure all seats are filled and teams are balanced to start the game.
-            </p>
+            <div class="setup-instructions">
+              <p class="blocker-message">{{ getGameStartBlockerMessage() }}</p>
+            </div>
           }
         </div>
       }

@@ -35,6 +35,7 @@ interface GameEvent {
     | 'gameFinished'
     | 'nameCalled'
     | 'emojiChanged'
+    | 'playerNameChanged'
     | 'roomUpdate'
     | 'error';
   data: any;
@@ -128,6 +129,10 @@ export class SocketService {
       this.gameEventSubject.next({ type: 'emojiChanged', data });
     });
 
+    this.socket.on('playerNameChanged', (data) => {
+      this.gameEventSubject.next({ type: 'playerNameChanged', data });
+    });
+
     this.socket.on('roomUpdate', (data) => {
       this.gameEventSubject.next({ type: 'roomUpdate', data });
     });
@@ -188,6 +193,10 @@ export class SocketService {
 
   setEmoji(emoji: string): void {
     this.socket?.emit('setEmoji', { emoji });
+  }
+
+  setPlayerName(name: string): void {
+    this.socket?.emit('setPlayerName', { name });
   }
 
   disconnect(): void {
