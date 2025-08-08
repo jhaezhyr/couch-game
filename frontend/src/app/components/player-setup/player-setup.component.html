@@ -1,0 +1,47 @@
+<div class="player-setup card" (click)="focusNameInput()">
+  <h3>Set Your Identity</h3>
+  
+  <div class="setup-sections">
+    <!-- Name section -->
+    <div class="name-section">
+      <h4>Your Name</h4>
+      <div class="identity-form">
+        <input
+          #nameInput
+          class="input"
+          [value]="playerName()"
+          (input)="onNameInput($event)"
+          placeholder="Enter your name for this game"
+          (keyup.enter)="onEnterKey()"
+        />
+        <button 
+          class="btn primary" 
+          (click)="updatePlayerName()" 
+          [disabled]="isUpdateDisabled()">
+          Update Name
+        </button>
+      </div>
+    </div>
+
+    <!-- Avatar section -->
+    <div class="avatar-section">
+      <h4>Your Avatar</h4>
+      <div class="emoji-grid">
+        @for (emoji of emojiBank; track emoji) {
+          <button
+            type="button"
+            class="emoji-btn"
+            [class.selected]="currentPlayerEmoji === emoji"
+            (click)="onEmojiClick(emoji, $event)">
+            {{ emoji }}
+          </button>
+        }
+      </div>
+      @if (currentPlayerEmoji) {
+        <p class="current-emoji">Selected: {{ currentPlayerEmoji }}</p>
+      } @else {
+        <p class="current-emoji">Select an emoji above</p>
+      }
+    </div>
+  </div>
+</div>

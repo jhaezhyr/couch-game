@@ -1,0 +1,22 @@
+<div class="game-controls card">
+  @if (isCurrentPlayer) {
+    <div class="current-turn">
+      <h3>It's your turn!</h3>
+      <p>Your secret name: <strong>{{ mySecretName }}</strong></p>
+      <p>Call a name to make that person move to the empty seat:</p>
+      <div class="name-selection">
+        @for (name of allPlayerNames; track name) {
+          <button
+            class="btn primary name-btn"
+            (click)="onCallName(name)"
+            [disabled]="isNameDisabled(name)">
+            {{ name }}
+          </button>
+        }
+      </div>
+    </div>
+  } @else {
+    <p class="waiting-turn">Waiting for {{ currentPlayerName }}'s move...</p>
+    <p class="secret-name">Your secret name: <strong>{{ mySecretName }}</strong></p>
+  }
+</div>

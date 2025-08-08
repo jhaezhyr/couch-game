@@ -1,33 +1,35 @@
-import { Component, signal, effect, ViewChild, ElementRef, afterNextRender } from '@angular/core';
+import { Component, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GameStateService } from '../../services/game-state';
 import { ToastService } from '../../services/toast';
 import { PlayerIdentityService } from '../../services/player-identity';
-
-export interface GameSession {
-  roomId: string;
-  roomName: string;
-  playerName: string;
-  emoji: string | null;
-  gamePhase: 'setup' | 'playing' | 'finished';
-  playerCount: number;
-  lastActivity: string;
-}
+import { RoomSelectionComponent, type GameSession } from '../room-selection/room-selection.component';
+import { PlayerSetupComponent } from '../player-setup/player-setup.component';
+import { GameBoardComponent } from '../game-board/game-board.component';
+import { GameControlsComponent } from '../game-controls/game-controls.component';
+import { CallHistoryComponent } from '../call-history/call-history.component';
+import { TeamAssignmentComponent } from '../team-assignment/team-assignment.component';
 
 @Component({
   selector: 'app-lobby',
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule, 
+    FormsModule, 
+    RoomSelectionComponent,
+    PlayerSetupComponent,
+    GameBoardComponent,
+    GameControlsComponent,
+    CallHistoryComponent,
+    TeamAssignmentComponent
+  ],
   templateUrl: './lobby.html',
   styleUrl: './lobby.less',
 })
 export class Lobby {
-  playerName = signal('');
-  roomId = signal('');
   activeSessions = signal<GameSession[]>([]);
   loadingSessions = signal(false);
-
-  @ViewChild('nameInput') nameInput?: ElementRef<HTMLInputElement>;
+  roomId = signal(''); // Still needed for rejoinSession
 
   // Expose toasts for template via a getter to avoid init order errors
   get toasts() {
@@ -83,14 +85,6 @@ export class Lobby {
     private toast: ToastService,
     private playerIdentityService: PlayerIdentityService
   ) {
-    // Auto-populate name field when player joins a room
-    effect(() => {
-      const player = this.gameState.player();
-      if (player && player.name && !this.playerName()) {
-        this.playerName.set(player.name);
-      }
-    });
-    
     // Auto-connect on component init
     this.connect();
 
@@ -119,19 +113,15 @@ export class Lobby {
     }
   }
 
-  joinRoom(): void {
-    const room = this.roomId().trim();
+  joinRoom(roomId: string): void {
+    const room = roomId.trim();
     // Join room without a name initially - name will be set during setup
     this.gameState.joinRoom(room || 'new');
   }
 
-  updatePlayerName(): void {
-    const name = this.playerName().trim();
-    if (!name) return;
-    this.gameState.setPlayerName(name);
-    // Clear the input briefly to show it was updated
-    this.playerName.set('');
-    setTimeout(() => this.playerName.set(name), 100);
+  updatePlayerName(name: string): void {
+    if (!name.trim()) return;
+    this.gameState.setPlayerName(name.trim());
   }
 
   leaveRoom(): void {
@@ -212,61 +202,27 @@ export class Lobby {
     this.gameState.callPlayerName(name);
   }
 
-  setEmoji(emoji: string, event?: Event): void {
-    // Add visual feedback - add active class to the clicked button briefly
-    if (event && event.target) {
-      const button = event.target as HTMLElement;
-      button.classList.add('active');
-      setTimeout(() => button.classList.remove('active'), 150);
-    }
-    
+  setEmoji(emoji: string): void {
     this.gameState.setPlayerEmoji(emoji);
   }
 
-  getSeatTrackingId(seat: any, index: number): string {
-    // Use player ID if seat is occupied, otherwise use a stable seat identifier
-    return seat?.id || `seat-${index}`;
-  }
-
-  getCircularPosition(
-    seatIndex: number,
-    totalSeats: number
-  ): { x: string; y: string } {
-    if (totalSeats === 0) return { x: '50%', y: '50%' };
-
-    // Calculate angle for this seat (starting from top, going clockwise)
-    const angle = (2 * Math.PI * seatIndex) / totalSeats - Math.PI / 2;
-
-    // Radius as percentage of container (adjust for responsive design)
-    const radius = 40; // 40% of container
-
-    // Calculate position
-    const x = 50 + radius * Math.cos(angle); // Center (50%) + offset
-    const y = 50 + radius * Math.sin(angle); // Center (50%) + offset
-
+  getPlayerLookup() {
     return {
-      x: `${x}%`,
-      y: `${y}%`,
+      getName: (playerId: string) => this.getPlayerName(playerId),
+      getEmoji: (playerId: string) => this.getPlayerEmoji(playerId)
     };
   }
 
-  // Helper methods for recent calls display
-  getDisplayedRecentCalls() {
-    const allCalls = this.gameState.recentCalls();
-    return allCalls.slice(-3); // Show only last 3 calls
+  getCurrentPlayerId(): string | null {
+    const room = this.gameState.room();
+    if (!room || room.currentPlayerIndex === undefined) return null;
+    return room.seats[room.currentPlayerIndex]?.id || null;
   }
 
-  getHiddenCallsCount(): number {
-    const allCalls = this.gameState.recentCalls();
-    return Math.max(0, allCalls.length - 3);
-  }
+
 
   focusNameInput(): void {
-    const nameInput = document.querySelector('input[placeholder="Enter your name for this game"]') as HTMLInputElement;
-    if (nameInput) {
-      nameInput.focus();
-      nameInput.select();
-    }
+    // This is now handled by the PlayerSetup component
   }
 
   // Game start validation helpers
@@ -350,7 +306,6 @@ export class Lobby {
   }
 
   rejoinSession(session: GameSession): void {
-    this.roomId.set(session.roomId);
-    this.joinRoom();
+    this.joinRoom(session.roomId);
   }
 }

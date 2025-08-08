@@ -1,0 +1,122 @@
+.couch-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-height: 450px;
+  position: relative;
+}
+
+.flow-indicator {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.couch {
+  .seats-grid {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    margin: 20px auto;
+
+    @media (max-width: 768px) {
+      width: 300px;
+      height: 300px;
+    }
+
+    @media (max-width: 480px) {
+      width: 250px;
+      height: 250px;
+    }
+  }
+}
+
+.seat {
+  position: relative;
+
+  .seat-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+
+    .seat-emoji {
+      font-size: 24px;
+      margin-bottom: 2px;
+
+      @media (max-width: 768px) {
+        font-size: 20px;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 16px;
+        margin-bottom: 1px;
+      }
+    }
+
+    .seat-name {
+      font-size: 10px;
+      font-weight: bold;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+
+      @media (max-width: 480px) {
+        font-size: 8px;
+      }
+    }
+  }
+
+  .seat-placeholder {
+    font-size: 2rem;
+    color: #666;
+  }
+
+  &.my-seat {
+    border-color: #4CAF50;
+    box-shadow: 0 0 15px fade(#4CAF50, 50%);
+  }
+
+  &.current-player.my-seat {
+    animation: pulse-glow 1s ease-in-out infinite alternate;
+  }
+
+  &.circular-seat {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    transition: left 0.5s ease-in-out, top 0.5s ease-in-out;
+  }
+
+  &.couch-seat {
+    border: 3px solid #FF9800;
+    box-shadow: 0 0 20px fade(#FF9800, 30%);
+
+    &::after {
+      content: "🛋️";
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+
+      @media (max-width: 480px) {
+        font-size: 12px;
+        bottom: -20px;
+      }
+    }
+  }
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 15px fade(#4CAF50, 50%);
+  }
+  100% {
+    box-shadow: 0 0 25px fade(#4CAF50, 80%);
+  }
+}

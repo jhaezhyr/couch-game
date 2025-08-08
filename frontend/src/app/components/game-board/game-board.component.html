@@ -1,0 +1,59 @@
+<div class="couch-area">
+  <div class="flow-indicator">Players move clockwise around the circle</div>
+  <div class="couch">
+    <div class="seats-grid">
+      @for (seat of seats; track getSeatTrackingId(seat, $index)) {
+        @if (gamePhase === 'setup') {
+          <button
+            type="button"
+            class="seat circular-seat"
+            [class.occupied]="seat !== null"
+            [class.current-player]="isCurrentPlayerSeat($index)"
+            [class.team-a]="getPlayerTeam(seat?.id) === 'A'"
+            [class.team-b]="getPlayerTeam(seat?.id) === 'B'"
+            [class.my-seat]="isMySeat($index)"
+            [class.couch-seat]="isCouchSeat($index)"
+            [style.left]="getCircularPosition($index, seats.length || 0).x"
+            [style.top]="getCircularPosition($index, seats.length || 0).y"
+            (click)="onSeatClick($index)"
+            [attr.aria-label]="seat ? 'Seat for ' + seat.name : 'Empty seat'"
+          >
+            @if (seat) {
+              <div class="seat-content">
+                @if (seat.emoji) {
+                  <span class="seat-emoji">{{ seat.emoji }}</span>
+                }
+                <span class="seat-name">{{ seat.name }}</span>
+              </div>
+            } @else {
+              <span class="seat-placeholder">+</span>
+            }
+          </button>
+        } @else {
+          <div
+            class="seat circular-seat"
+            [class.occupied]="seat !== null"
+            [class.current-player]="isCurrentPlayerSeat($index)"
+            [class.team-a]="getPlayerTeam(seat?.id) === 'A'"
+            [class.team-b]="getPlayerTeam(seat?.id) === 'B'"
+            [class.my-seat]="isMySeat($index)"
+            [class.couch-seat]="isCouchSeat($index)"
+            [style.left]="getCircularPosition($index, seats.length || 0).x"
+            [style.top]="getCircularPosition($index, seats.length || 0).y"
+          >
+            @if (seat) {
+              <div class="seat-content">
+                @if (seat.emoji) {
+                  <span class="seat-emoji">{{ seat.emoji }}</span>
+                }
+                <span class="seat-name">{{ seat.name }}</span>
+              </div>
+            } @else {
+              <span class="seat-placeholder">+</span>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

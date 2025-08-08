@@ -25,66 +25,14 @@
       </div>
     </div>
   } @else if (!gameState.room()) {
-    <div class="room-selection">
-      <!-- Join or Create Room -->
-      <div class="room-panel card">
-        <h2>Join or Create Room</h2>
-        <div class="room-form">
-          <input
-            class="input"
-            [value]="roomId()"
-            (input)="roomId.set($any($event.target).value)"
-            placeholder="Enter room ID (or leave empty for new room)"
-            (keyup.enter)="joinRoom()"
-            autofocus
-          />
-          <button class="btn success" (click)="joinRoom()">
-            @if (roomId().trim()) {
-              Join Room
-            } @else {
-              Create New Room
-            }
-          </button>
-        </div>
-      </div>
-
-      <!-- Active Sessions -->
-      @if (loadingSessions()) {
-        <div class="sessions-loading-spinner">
-          <div class="loading-spinner"></div>
-        </div>
-      } @else if (activeSessions().length > 0) {
-        <div class="active-sessions card">
-          <h2>Your Active Games</h2>
-          <div class="sessions-list">
-            @for (session of activeSessions(); track session.roomId) {
-              <div class="session-item">
-                <div class="session-info">
-                  <div class="session-header">
-                    @if (session.emoji) {
-                      <span class="session-emoji">{{ session.emoji }}</span>
-                    }
-                    <span class="session-name">{{ session.playerName }}</span>
-                    <span class="session-phase" [class]="'phase-' + session.gamePhase">{{ session.gamePhase }}</span>
-                  </div>
-                  <div class="session-details">
-                    <span class="room-id">{{ session.roomName }}</span>
-                    <span class="player-count">{{ session.playerCount }} players</span>
-                  </div>
-                </div>
-                <button class="btn primary" (click)="rejoinSession(session)">
-                  Rejoin
-                </button>
-              </div>
-            }
-          </div>
-        </div>
-      }
-    </div>
+    <app-room-selection
+      [loadingSessions]="loadingSessions"
+      [activeSessions]="activeSessions"
+      (joinRoom)="joinRoom($event)"
+      (rejoinSession)="rejoinSession($event)">
+    </app-room-selection>
   } @else {
     <div class="game-room">
-      
-
       @if (gameState.gamePhase() === 'setup') {
         <div class="room-info card">
           <h2>Room: {{ gameState.room()?.id }}</h2>
@@ -97,213 +45,55 @@
           }
         </div>
 
-        <div class="player-setup card" (click)="focusNameInput()">
-          <h3>Set Your Identity</h3>
-          
-          <div class="setup-sections">
-            <!-- Name section -->
-            <div class="name-section">
-              <h4>Your Name</h4>
-              <div class="identity-form">
-                <input
-                  #nameInput
-                  class="input"
-                  [value]="playerName()"
-                  (input)="playerName.set($any($event.target).value)"
-                  placeholder="Enter your name for this game"
-                  (keyup.enter)="updatePlayerName()"
-                />
-                <button 
-                  class="btn primary" 
-                  (click)="updatePlayerName()" 
-                  [disabled]="!playerName().trim() || playerName().trim() === gameState.player()?.name">
-                  Update Name
-                </button>
-              </div>
-            </div>
-
-            <!-- Avatar section -->
-            <div class="avatar-section">
-              <h4>Your Avatar</h4>
-              <div class="emoji-grid">
-                @for (emoji of emojiBank; track emoji) {
-                  <button
-                    type="button"
-                    class="emoji-btn"
-                    [class.selected]="gameState.player()?.emoji === emoji"
-                    (click)="setEmoji(emoji, $event)">
-                    {{ emoji }}
-                  </button>
-                }
-              </div>
-              @if (gameState.player()?.emoji) {
-                <p class="current-emoji">Selected: {{ gameState.player()?.emoji }}</p>
-              } @else {
-                <p class="current-emoji">Select an emoji above</p>
-              }
-            </div>
-          </div>
-        </div>
+        <app-player-setup
+          [currentPlayerName]="gameState.player()?.name || ''"
+          [currentPlayerEmoji]="gameState.player()?.emoji || ''"
+          [emojiBank]="emojiBank"
+          (nameUpdated)="updatePlayerName($event)"
+          (emojiSelected)="setEmoji($event)"
+          (focusRequested)="focusNameInput()">
+        </app-player-setup>
       }
 
       @if (gameState.gamePhase() === 'playing') {
-        <div class="game-controls card">
-          @if (gameState.isCurrentPlayer()) {
-            <div class="current-turn">
-              <h3>It's your turn!</h3>
-              <p>Your secret name: <strong>{{ getMySecretName() }}</strong></p>
-              <p>Call a name to make that person move to the empty seat:</p>
-              <div class="name-selection">
-                @for (name of getAllPlayerNames(); track name) {
-                  <button
-                    class="btn primary name-btn"
-                    (click)="callName(name)"
-                    [disabled]="name === getMySecretName()">
-                    {{ name }}
-                  </button>
-                }
-              </div>
-            </div>
-          } @else {
-            <p class="waiting-turn">Waiting for {{ getCurrentPlayerName() }}'s move...</p>
-            <p class="secret-name">Your secret name: <strong>{{ getMySecretName() }}</strong></p>
-          }
-        </div>
+        <app-game-controls
+          [isCurrentPlayer]="gameState.isCurrentPlayer()"
+          [mySecretName]="getMySecretName()"
+          [currentPlayerName]="getCurrentPlayerName()"
+          [allPlayerNames]="getAllPlayerNames()"
+          (nameCall)="callName($event)">
+        </app-game-controls>
       }
 
       <!-- Game layout with responsive design -->
       <div class="game-layout">
         <!-- Playing field -->
-        <div class="couch-area">
-          <div class="flow-indicator">Players move clockwise around the circle</div>
-          <div class="couch">
-            <div class="seats-grid">
-              @for (seat of gameState.room()?.seats; track getSeatTrackingId(seat, $index)) {
-                @if (gameState.gamePhase() === 'setup') {
-                  <button
-                    type="button"
-                    class="seat circular-seat"
-                    [class.occupied]="seat !== null"
-                    [class.current-player]="isCurrentPlayerSeat($index)"
-                    [class.team-a]="getPlayerTeam(seat?.id) === 'A'"
-                    [class.team-b]="getPlayerTeam(seat?.id) === 'B'"
-                    [class.my-seat]="seat?.id === gameState.player()?.id"
-                    [class.couch-seat]="isCouchSeat($index)"
-                    [style.left]="getCircularPosition($index, gameState.room()?.seats?.length || 0).x"
-                    [style.top]="getCircularPosition($index, gameState.room()?.seats?.length || 0).y"
-                    (click)="takeSeat($index)"
-                    [attr.aria-label]="seat ? 'Seat for ' + seat.name : 'Empty seat'"
-                  >
-                    @if (seat) {
-                      <div class="seat-content">
-                        @if (seat.emoji) {
-                          <span class="seat-emoji">{{ seat.emoji }}</span>
-                        }
-                        <span class="seat-name">{{ seat.name }}</span>
-                      </div>
-                    } @else {
-                      <span class="seat-placeholder">+</span>
-                    }
-                  </button>
-                } @else {
-                  <div
-                    class="seat circular-seat"
-                    [class.occupied]="seat !== null"
-                    [class.current-player]="isCurrentPlayerSeat($index)"
-                    [class.team-a]="getPlayerTeam(seat?.id) === 'A'"
-                    [class.team-b]="getPlayerTeam(seat?.id) === 'B'"
-                    [class.my-seat]="seat?.id === gameState.player()?.id"
-                    [class.couch-seat]="isCouchSeat($index)"
-                    [style.left]="getCircularPosition($index, gameState.room()?.seats?.length || 0).x"
-                    [style.top]="getCircularPosition($index, gameState.room()?.seats?.length || 0).y"
-                  >
-                    @if (seat) {
-                      <div class="seat-content">
-                        @if (seat.emoji) {
-                          <span class="seat-emoji">{{ seat.emoji }}</span>
-                        }
-                        <span class="seat-name">{{ seat.name }}</span>
-                      </div>
-                    } @else {
-                      <span class="seat-placeholder">+</span>
-                    }
-                  </div>
-                }
-              }
-            </div>
-          </div>
-        </div>
+        <app-game-board
+          [seats]="gameState.room()?.seats || []"
+          [gamePhase]="gameState.gamePhase()"
+          [currentPlayerId]="getCurrentPlayerId()"
+          [myPlayerId]="gameState.player()?.id || null"
+          [teams]="gameState.room()?.teams || { A: [], B: [] }"
+          (seatClicked)="takeSeat($event)">
+        </app-game-board>
 
         <!-- Recent calls sidebar -->
         <div class="game-info-panel">
-          
-          @if (gameState.recentCalls().length) {
-            <div class="call-history card">
-              <h3>Recent calls</h3>
-              <ul class="call-list">
-                @for (c of getDisplayedRecentCalls(); track c.at) {
-                  <li>
-                    <span class="caller">{{ c.callerName }}</span>
-                    <span class="verb"> called </span>
-                    <span class="called">"{{ c.calledName }}"</span>
-                    @if (c.movedPlayerName) {
-                      <div class="move-result">→ {{ c.movedPlayerName }} moved to the empty seat</div>
-                    }
-                  </li>
-                }
-              </ul>
-              @if (getHiddenCallsCount() > 0) {
-                <div class="more-calls-indicator">
-                  ... and {{ getHiddenCallsCount() }} more calls before
-                </div>
-              }
-            </div>
-          }
+          <app-call-history
+            [recentCalls]="gameState.recentCalls()"
+            [maxDisplayedCalls]="3">
+          </app-call-history>
         </div>
       </div>
 
       @if (gameState.gamePhase() === 'setup') {
-        <div class="team-assignment card">
-          <h3>Team Assignment</h3>
-          <div class="teams-display">
-            <div class="team team-a">
-              <h4>Team A</h4>
-              <div class="team-members">
-                @for (playerId of (gameState.room()?.teams?.A || []); track playerId) {
-                  <span class="team-member">
-                    @if (getPlayerEmoji(playerId)) {
-                      <span class="team-member-emoji">{{ getPlayerEmoji(playerId) }}</span>
-                    }
-                    <span class="team-member-name">{{ getPlayerName(playerId) }}</span>
-                  </span>
-                }
-              </div>
-            </div>
-            <div class="team team-b">
-              <h4>Team B</h4>
-              <div class="team-members">
-                @for (playerId of (gameState.room()?.teams?.B || []); track playerId) {
-                  <span class="team-member">
-                    @if (getPlayerEmoji(playerId)) {
-                      <span class="team-member-emoji">{{ getPlayerEmoji(playerId) }}</span>
-                    }
-                    <span class="team-member-name">{{ getPlayerName(playerId) }}</span>
-                  </span>
-                }
-              </div>
-            </div>
-          </div>
-
-          @if (canStartGame()) {
-            <button class="btn success pulse-success" (click)="startGame()">
-              Start Game!
-            </button>
-          } @else {
-            <div class="setup-instructions">
-              <p class="blocker-message">{{ getGameStartBlockerMessage() }}</p>
-            </div>
-          }
-        </div>
+        <app-team-assignment
+          [teams]="gameState.room()?.teams || { A: [], B: [] }"
+          [canStartGame]="canStartGame()"
+          [gameStartBlockerMessage]="getGameStartBlockerMessage()"
+          [playerLookupFn]="getPlayerLookup()"
+          (startGame)="startGame()">
+        </app-team-assignment>
       }
 
       <div class="room-actions">

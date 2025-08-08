@@ -1,0 +1,41 @@
+<div class="team-assignment card">
+  <h3>Team Assignment</h3>
+  <div class="teams-display">
+    <div class="team team-a">
+      <h4>Team A</h4>
+      <div class="team-members">
+        @for (playerId of teams.A; track playerId) {
+          <span class="team-member">
+            @if (getPlayerEmoji(playerId)) {
+              <span class="team-member-emoji">{{ getPlayerEmoji(playerId) }}</span>
+            }
+            <span class="team-member-name">{{ getPlayerName(playerId) }}</span>
+          </span>
+        }
+      </div>
+    </div>
+    <div class="team team-b">
+      <h4>Team B</h4>
+      <div class="team-members">
+        @for (playerId of teams.B; track playerId) {
+          <span class="team-member">
+            @if (getPlayerEmoji(playerId)) {
+              <span class="team-member-emoji">{{ getPlayerEmoji(playerId) }}</span>
+            }
+            <span class="team-member-name">{{ getPlayerName(playerId) }}</span>
+          </span>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (canStartGame) {
+    <button class="btn success pulse-success" (click)="onStartGame()">
+      Start Game!
+    </button>
+  } @else {
+    <div class="setup-instructions">
+      <p class="blocker-message">{{ gameStartBlockerMessage }}</p>
+    </div>
+  }
+</div>

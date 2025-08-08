@@ -1,0 +1,22 @@
+@if (recentCalls.length) {
+  <div class="call-history card">
+    <h3>Recent calls</h3>
+    <ul class="call-list">
+      @for (c of getDisplayedRecentCalls(); track c.at) {
+        <li>
+          <span class="caller">{{ c.callerName }}</span>
+          <span class="verb"> called </span>
+          <span class="called">"{{ c.calledName }}"</span>
+          @if (c.movedPlayerName) {
+            <div class="move-result">→ {{ c.movedPlayerName }} moved to the empty seat</div>
+          }
+        </li>
+      }
+    </ul>
+    @if (getHiddenCallsCount() > 0) {
+      <div class="more-calls-indicator">
+        ... and {{ getHiddenCallsCount() }} more calls before
+      </div>
+    }
+  </div>
+}

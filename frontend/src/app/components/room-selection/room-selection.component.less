@@ -1,0 +1,166 @@
+.room-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.room-panel {
+  text-align: center;
+  
+  h2 {
+    margin-bottom: 20px;
+  }
+}
+
+.room-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 400px;
+  margin: 0 auto;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
+
+  .input {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+
+    &:focus {
+      outline: none;
+      border-color: #007bff;
+    }
+  }
+
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &.success {
+      background-color: #28a745;
+      color: white;
+
+      &:hover {
+        background-color: #218838;
+      }
+    }
+  }
+}
+
+.sessions-loading-spinner {
+  text-align: center;
+  padding: 40px;
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
+}
+
+.active-sessions {
+  h2 {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+}
+
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.session-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+.session-info {
+  flex: 1;
+}
+
+.session-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+
+  .session-emoji {
+    font-size: 20px;
+  }
+
+  .session-name {
+    font-weight: bold;
+    color: #333;
+  }
+
+  .session-phase {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    text-transform: uppercase;
+
+    &.phase-setup {
+      background-color: #ffc107;
+      color: #000;
+    }
+
+    &.phase-playing {
+      background-color: #28a745;
+      color: white;
+    }
+  }
+}
+
+.session-details {
+  display: flex;
+  gap: 15px;
+  font-size: 14px;
+  color: #666;
+
+  .room-id {
+    font-weight: 500;
+  }
+}
+
+.btn.primary {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
