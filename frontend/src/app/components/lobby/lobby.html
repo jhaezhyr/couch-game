@@ -34,6 +34,7 @@
           (input)="roomId.set($any($event.target).value)"
           placeholder="Enter room ID (or leave empty for new room)"
           (keyup.enter)="joinRoom()"
+          autofocus
         />
         <button class="btn success" (click)="joinRoom()">
           @if (roomId().trim()) {
@@ -60,7 +61,7 @@
           }
         </div>
 
-        <div class="player-setup card">
+        <div class="player-setup card" (click)="focusNameInput()">
           <h3>Set Your Identity</h3>
           
           <div class="setup-sections">
@@ -69,6 +70,7 @@
               <h4>Your Name</h4>
               <div class="identity-form">
                 <input
+                  #nameInput
                   class="input"
                   [value]="playerName()"
                   (input)="playerName.set($any($event.target).value)"

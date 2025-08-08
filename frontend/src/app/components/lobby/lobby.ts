@@ -1,4 +1,4 @@
-import { Component, signal, effect } from '@angular/core';
+import { Component, signal, effect, ViewChild, ElementRef, afterNextRender } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GameStateService } from '../../services/game-state';
@@ -13,6 +13,8 @@ import { ToastService } from '../../services/toast';
 export class Lobby {
   playerName = signal('');
   roomId = signal('');
+
+  @ViewChild('nameInput') nameInput?: ElementRef<HTMLInputElement>;
 
   // Expose toasts for template via a getter to avoid init order errors
   get toasts() {
@@ -77,6 +79,16 @@ export class Lobby {
     
     // Auto-connect on component init
     this.connect();
+
+    // Focus the name input when setup phase appears
+    effect(() => {
+      if (this.gameState.gamePhase() === 'setup') {
+        // Try multiple times with increasing delays
+        setTimeout(() => this.focusNameInput(), 50);
+        setTimeout(() => this.focusNameInput(), 200);
+        setTimeout(() => this.focusNameInput(), 500);
+      }
+    });
   }
 
   async connect(): Promise<void> {
@@ -221,6 +233,14 @@ export class Lobby {
   getHiddenCallsCount(): number {
     const allCalls = this.gameState.recentCalls();
     return Math.max(0, allCalls.length - 3);
+  }
+
+  focusNameInput(): void {
+    const nameInput = document.querySelector('input[placeholder="Enter your name for this game"]') as HTMLInputElement;
+    if (nameInput) {
+      nameInput.focus();
+      nameInput.select();
+    }
   }
 
   // Game start validation helpers
