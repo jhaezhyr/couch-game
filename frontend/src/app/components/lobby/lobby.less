@@ -40,7 +40,7 @@ button {
   .glow(@glow-error, 0.5);
 }
 
-.connection-panel, .room-panel {
+.connection-panel {
   max-width: 500px;
   margin: 0 auto;
   text-align: center;
@@ -61,6 +61,122 @@ button {
   }
 }
 
+.room-selection {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.room-panel {
+  text-align: center;
+  
+  h2 {
+    margin-bottom: 20px;
+    color: @primary-text;
+  }
+}
+
+.active-sessions {
+  text-align: left;
+  
+  h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: @glow-primary;
+  }
+
+  .loading-sessions {
+    text-align: center;
+    color: @muted-text;
+    padding: 20px;
+    font-style: italic;
+  }
+}
+
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: @secondary-bg;
+  border: 1px solid @accent-bg;
+  border-radius: 8px;
+  transition: all @animation-normal ease;
+
+  &:hover {
+    background: fade(@glow-primary, 10%);
+    border-color: fade(@glow-primary, 30%);
+  }
+}
+
+.session-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.session-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  .session-emoji {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  
+  .session-name {
+    font-weight: 600;
+    color: @primary-text;
+  }
+  
+  .session-phase {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    
+    &.phase-setup {
+      background: fade(@glow-warning, 20%);
+      color: @glow-warning;
+    }
+    
+    &.phase-playing {
+      background: fade(@glow-success, 20%);
+      color: @glow-success;
+    }
+    
+    &.phase-finished {
+      background: fade(@muted-text, 20%);
+      color: @muted-text;
+    }
+  }
+}
+
+.session-details {
+  display: flex;
+  gap: 16px;
+  color: @secondary-text;
+  font-size: 0.9rem;
+  
+  .room-id {
+    font-family: monospace;
+    background: @accent-bg;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+}
+
 .loading-spinner {
   width: 40px;
   height: 40px;
@@ -69,6 +185,20 @@ button {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 20px auto;
+}
+
+.sessions-loading-spinner {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  
+  .loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid @accent-bg;
+    border-top: 2px solid @glow-primary;
+    margin: 0;
+  }
 }
 
 @keyframes spin {

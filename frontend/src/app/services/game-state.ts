@@ -345,6 +345,10 @@ export class GameStateService {
     return null;
   }
 
+  getActiveSessions(playerId: string): Promise<any[]> {
+    return this.socketService.getActiveSessions(playerId);
+  }
+
   disconnect(): void {
     this.socketService.disconnect();
     this.currentRoom.set(null);

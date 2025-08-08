@@ -199,6 +199,34 @@ export class SocketService {
     this.socket?.emit('setPlayerName', { name });
   }
 
+  getActiveSessions(playerId: string): Promise<any[]> {
+    return new Promise((resolve, reject) => {
+      if (!this.socket) {
+        reject(new Error('Not connected to server'));
+        return;
+      }
+
+      // Set up one-time listener for the response
+      const handleResponse = (data: { sessions: any[] }) => {
+        this.socket!.off('activeSessionsResponse', handleResponse);
+        resolve(data.sessions);
+      };
+      
+      const handleError = () => {
+        this.socket!.off('activeSessionsResponse', handleResponse);
+        reject(new Error('Failed to get active sessions'));
+      };
+
+      this.socket.on('activeSessionsResponse', handleResponse);
+      
+      // Set timeout for the request
+      setTimeout(handleError, 5000);
+      
+      // Send the request
+      this.socket.emit('getActiveSessions', { playerId });
+    });
+  }
+
   disconnect(): void {
     if (this.socket) {
       this.socket.disconnect();

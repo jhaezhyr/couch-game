@@ -419,6 +419,44 @@ export function createGameServer(): ServerInstance {
       delete socketPlayers[socket.id];
     });
 
+    socket.on("getActiveSessions", ({ playerId }) => {
+      const activeSessions: any[] = [];
+
+      // Check active games
+      Object.entries(gameRooms).forEach(([roomId, gameRoom]) => {
+        const player = gameRoom.players.find(p => p.id.value === playerId);
+        if (player) {
+          activeSessions.push({
+            roomId: roomId,
+            roomName: `Room ${roomId}`,
+            playerName: player.name.value,
+            emoji: player.emoji,
+            gamePhase: 'playing',
+            playerCount: gameRoom.players.length,
+            lastActivity: new Date().toISOString(), // TODO: track real last activity
+          });
+        }
+      });
+
+      // Check setup rooms
+      Object.entries(gameRoomSetups).forEach(([roomId, setup]) => {
+        const player = setup.players.find(p => p.id.value === playerId);
+        if (player) {
+          activeSessions.push({
+            roomId: roomId,
+            roomName: `Room ${roomId}`,
+            playerName: player.name.value,
+            emoji: player.emoji,
+            gamePhase: 'setup',
+            playerCount: setup.players.length,
+            lastActivity: new Date().toISOString(), // TODO: track real last activity
+          });
+        }
+      });
+
+      socket.emit("activeSessionsResponse", { sessions: activeSessions });
+    });
+
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);
 

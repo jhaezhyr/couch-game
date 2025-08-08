@@ -25,25 +25,61 @@
       </div>
     </div>
   } @else if (!gameState.room()) {
-    <div class="room-panel card">
-      <h2>Join or Create Room</h2>
-      <div class="room-form">
-        <input
-          class="input"
-          [value]="roomId()"
-          (input)="roomId.set($any($event.target).value)"
-          placeholder="Enter room ID (or leave empty for new room)"
-          (keyup.enter)="joinRoom()"
-          autofocus
-        />
-        <button class="btn success" (click)="joinRoom()">
-          @if (roomId().trim()) {
-            Join Room
-          } @else {
-            Create New Room
-          }
-        </button>
+    <div class="room-selection">
+      <!-- Join or Create Room -->
+      <div class="room-panel card">
+        <h2>Join or Create Room</h2>
+        <div class="room-form">
+          <input
+            class="input"
+            [value]="roomId()"
+            (input)="roomId.set($any($event.target).value)"
+            placeholder="Enter room ID (or leave empty for new room)"
+            (keyup.enter)="joinRoom()"
+            autofocus
+          />
+          <button class="btn success" (click)="joinRoom()">
+            @if (roomId().trim()) {
+              Join Room
+            } @else {
+              Create New Room
+            }
+          </button>
+        </div>
       </div>
+
+      <!-- Active Sessions -->
+      @if (loadingSessions()) {
+        <div class="sessions-loading-spinner">
+          <div class="loading-spinner"></div>
+        </div>
+      } @else if (activeSessions().length > 0) {
+        <div class="active-sessions card">
+          <h2>Your Active Games</h2>
+          <div class="sessions-list">
+            @for (session of activeSessions(); track session.roomId) {
+              <div class="session-item">
+                <div class="session-info">
+                  <div class="session-header">
+                    @if (session.emoji) {
+                      <span class="session-emoji">{{ session.emoji }}</span>
+                    }
+                    <span class="session-name">{{ session.playerName }}</span>
+                    <span class="session-phase" [class]="'phase-' + session.gamePhase">{{ session.gamePhase }}</span>
+                  </div>
+                  <div class="session-details">
+                    <span class="room-id">{{ session.roomName }}</span>
+                    <span class="player-count">{{ session.playerCount }} players</span>
+                  </div>
+                </div>
+                <button class="btn primary" (click)="rejoinSession(session)">
+                  Rejoin
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
     </div>
   } @else {
     <div class="game-room">

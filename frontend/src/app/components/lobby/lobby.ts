@@ -3,6 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GameStateService } from '../../services/game-state';
 import { ToastService } from '../../services/toast';
+import { PlayerIdentityService } from '../../services/player-identity';
+
+export interface GameSession {
+  roomId: string;
+  roomName: string;
+  playerName: string;
+  emoji: string | null;
+  gamePhase: 'setup' | 'playing' | 'finished';
+  playerCount: number;
+  lastActivity: string;
+}
 
 @Component({
   selector: 'app-lobby',
@@ -13,6 +24,8 @@ import { ToastService } from '../../services/toast';
 export class Lobby {
   playerName = signal('');
   roomId = signal('');
+  activeSessions = signal<GameSession[]>([]);
+  loadingSessions = signal(false);
 
   @ViewChild('nameInput') nameInput?: ElementRef<HTMLInputElement>;
 
@@ -67,7 +80,8 @@ export class Lobby {
 
   constructor(
     public gameState: GameStateService,
-    private toast: ToastService
+    private toast: ToastService,
+    private playerIdentityService: PlayerIdentityService
   ) {
     // Auto-populate name field when player joins a room
     effect(() => {
@@ -87,6 +101,13 @@ export class Lobby {
         setTimeout(() => this.focusNameInput(), 50);
         setTimeout(() => this.focusNameInput(), 200);
         setTimeout(() => this.focusNameInput(), 500);
+      }
+    });
+
+    // Load active sessions when connected but not in a room
+    effect(() => {
+      if (this.gameState.connected() && !this.gameState.room()) {
+        this.loadActiveSessions();
       }
     });
   }
@@ -305,5 +326,26 @@ export class Lobby {
     }
 
     return 'All requirements met!';
+  }
+
+  // Session management methods
+  async loadActiveSessions(): Promise<void> {
+    const playerId = this.playerIdentityService.getOrCreatePlayerId();
+    this.loadingSessions.set(true);
+    
+    try {
+      const sessions = await this.gameState.getActiveSessions(playerId);
+      this.activeSessions.set(sessions);
+      this.loadingSessions.set(false);
+    } catch (error) {
+      console.error('Failed to load active sessions:', error);
+      this.activeSessions.set([]);
+      this.loadingSessions.set(false);
+    }
+  }
+
+  rejoinSession(session: GameSession): void {
+    this.roomId.set(session.roomId);
+    this.joinRoom();
   }
 }
