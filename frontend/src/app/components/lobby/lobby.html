@@ -178,7 +178,7 @@
           <div class="flow-indicator">Players move clockwise around the circle</div>
           <div class="couch">
             <div class="seats-grid">
-              @for (seat of gameState.room()?.seats; track $index) {
+              @for (seat of gameState.room()?.seats; track getSeatTrackingId(seat, $index)) {
                 @if (gameState.gamePhase() === 'setup') {
                   <button
                     type="button"

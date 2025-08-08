@@ -223,6 +223,11 @@ export class Lobby {
     this.gameState.setPlayerEmoji(emoji);
   }
 
+  getSeatTrackingId(seat: any, index: number): string {
+    // Use player ID if seat is occupied, otherwise use a stable seat identifier
+    return seat?.id || `seat-${index}`;
+  }
+
   getCircularPosition(
     seatIndex: number,
     totalSeats: number
