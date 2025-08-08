@@ -441,10 +441,23 @@ button {
       transform: scale(1.1);
     }
 
+    &:active,
+    &.active {
+      transform: scale(0.95);
+      background: fade(@glow-primary, 30%);
+      transition: all 0.1s ease;
+    }
+
     &.selected {
       background: fade(@glow-success, 30%);
       border-color: @glow-success;
-      .glow(@glow-success, 1);
+      .glow(@glow-success, 1.2);
+      transform: scale(1.05);
+      
+      &:hover {
+        background: fade(@glow-success, 40%);
+        transform: scale(1.1);
+      }
     }
   }
 

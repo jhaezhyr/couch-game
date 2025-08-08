@@ -93,7 +93,7 @@
                     type="button"
                     class="emoji-btn"
                     [class.selected]="gameState.player()?.emoji === emoji"
-                    (click)="setEmoji(emoji)">
+                    (click)="setEmoji(emoji, $event)">
                     {{ emoji }}
                   </button>
                 }

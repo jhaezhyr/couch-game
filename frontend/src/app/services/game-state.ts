@@ -277,6 +277,13 @@ export class GameStateService {
   }
 
   setPlayerEmoji(emoji: string): void {
+    // Update local player state immediately for better UX
+    const currentPlayer = this.currentPlayer();
+    if (currentPlayer) {
+      this.currentPlayer.set({ ...currentPlayer, emoji });
+    }
+    
+    // Send to server
     this.socketService.setEmoji(emoji);
   }
 

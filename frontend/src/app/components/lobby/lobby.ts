@@ -179,7 +179,14 @@ export class Lobby {
     this.gameState.callPlayerName(name);
   }
 
-  setEmoji(emoji: string): void {
+  setEmoji(emoji: string, event?: Event): void {
+    // Add visual feedback - add active class to the clicked button briefly
+    if (event && event.target) {
+      const button = event.target as HTMLElement;
+      button.classList.add('active');
+      setTimeout(() => button.classList.remove('active'), 150);
+    }
+    
     this.gameState.setPlayerEmoji(emoji);
   }
 
